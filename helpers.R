@@ -2,329 +2,6 @@ helper_packages <- c('RColorBrewer', 'cowplot', 'tictoc', 'parallel', 'asserttha
                      'tidyr', 'colorRamp2', 'ComplexHeatmap', 'patchwork', 'jsonlite', 'plotly')
 suppressPackageStartupMessages(invisible(lapply(helper_packages, library, character.only = TRUE)))
 
-do_heatmap <- function(sobj = NULL,
-                       features = NULL,
-                       slingshot_df,
-                       slot_to_use = "data",
-                       show_row_names = TRUE,
-                       cluster_features = FALSE,
-                       supplied_data = NULL) {
-  if (!is.null(supplied_data)) {
-    mat_to_use <- supplied_data
-  } else {
-    mat_to_use <- slot(sobj@assays$RNA, slot_to_use)
-  }
-  subset_matrix <- mat_to_use[
-    features,
-    slingshot_df$barcodes
-  ] %>%
-    as.matrix()
-  col_fun <- colorRamp2(
-    c(0, quantile(subset_matrix, probs = c(0.99))[[1]]),
-    c("darkblue", "green")
-  )
-  present_clusters <- unique(slingshot_df$clust.names)
-  n_clusters <- (sobj[["clust.names"]] %>% unique() %>% dim())[1]
-  
-  #FL_colours <- brewer.pal(9, "Set1")
-  #FL_colours <- colorRampPalette(FL_colours)(n_clusters)
-  # FL_colours <- palette.colors(
-  #   n = n_clusters, palette = "Classic Tableau"
-  # )
-  #names(FL_colours) <- as.character(unique(sobj[["clust.names"]])[,1])
-  FL_colours <- palette.colors(
-    n = n_clusters, palette = "Classic Tableau", recycle = TRUE
-  )
-  names(FL_colours) <- as.character(unique(sobj[["clust.names"]])[,1])
-  cluster_annotation <- HeatmapAnnotation(
-    df = slingshot_df["clust.names"],
-    name = "clust.names",
-    #col = list(clust.names = FL_colours[present_clusters]),
-    annotation_legend_param = list(
-      legend_direction = "horizontal",
-      title_position = "lefttop-rot"
-    )
-  )
-  return(
-    Heatmap(
-      mat = subset_matrix,
-      show_column_names = F,
-      show_row_names = show_row_names,
-      cluster_rows = cluster_features,
-      cluster_columns = F,
-      col = col_fun,
-      column_title = "Cells ordered by pseudotime -->",
-      row_title = "Features",
-      heatmap_legend_param = list(
-        title = "Expression",
-        title_position = "lefttop-rot"
-      ),
-      border_gp = gpar(col = "black", lty = "solid"),
-      column_order = slingshot_df$barcodes,
-      top_annotation = cluster_annotation,
-      use_raster = FALSE
-    )
-  )
-}
-
-
-correlation_heatmap <- function(sobj = NULL,
-                                end_cluster = NULL,
-                                quant = .95,
-                                slot_to_use = "data",
-                                cluster_features = FALSE,
-                                supplied_data = NULL) {
-  end_cluster <- as.character(end_cluster)
-  quantil <- quantile(
-    abs(correlations[[end_cluster]]),
-    probs = quant, na.rm = T
-  )
-  highest_features <-
-    VariableFeatures(sobj)[which(abs(correlations[[end_cluster]]) > quantil)]
-  # slingshot_df <- colData(sce[[traj_dict[[end_cluster]][["lvl1"]]]])
-  # slingshot_df[["slingshot"]] <- NULL
-  # slingshot_df <- slingshot_df %>% as.data.frame()
-  slingshot_df <- sobj@meta.data
-  slingshot_df <- as.data.frame(list(
-    "barcodes" = rownames(slingshot_df),
-    "clust.names" = slingshot_df$clust.names,
-    "pseudotime" = sobj@meta.data[, end_cluster]
-    # "pseudotime" = slingshot_df[[str_c("slingPseudotime_",
-    # traj_dict[[end_cluster]][["lvl2"]])]]
-    # "pseudotime" = pseudotimes_of_interest[[end_cluster]]
-  )) %>%
-    arrange(pseudotime) %>%
-    drop_na()
-  do_heatmap(sobj = sobj,
-             features = highest_features,
-             slingshot_df = slingshot_df,
-             slot_to_use = slot_to_use,
-             cluster_features = cluster_features,
-             supplied_data = supplied_data,
-  ) +
-    labs(caption = end_cluster)
-  
-}
-
-
-mod_heatmap <- function(sobj = NULL,
-                        end_cluster = NULL,
-                        cluster_features = FALSE,
-                        modules = NULL,
-                        slot_to_use = 'data') {
-  end_cluster <- as.character(end_cluster)
-  slingshot_df <- sobj@meta.data
-  slingshot_df <- as.data.frame(list(
-    "barcodes" = rownames(slingshot_df),
-    "clust.names" = slingshot_df$clust.names,
-    "pseudotime" = sobj@meta.data[, end_cluster]
-  )) %>%
-    arrange(pseudotime) %>%
-    drop_na()
-  do_mod_heatmap(sobj = sobj,
-                 modules = modules,
-                 slingshot_df = slingshot_df,
-                 slot_to_use = slot_to_use,
-                 cluster_features = cluster_features,
-  ) +
-    labs(caption = end_cluster)
-  
-}
-
-
-do_mod_heatmap <- function(sobj = NULL,
-                           slingshot_df,
-                           slot_to_use = slot_to_use,
-                           show_row_names = TRUE,
-                           cluster_features = FALSE,
-                           modules = NULL) {
-  
-  mat_to_use <- sobj@meta.data[, modules]
-  mat_to_use <- t(mat_to_use)
-  
-  subset_matrix <- mat_to_use[
-    ,
-    slingshot_df$barcodes
-  ] %>%
-    as.matrix()
-  col_fun <- colorRamp2(
-    c(0, quantile(subset_matrix, probs = c(0.99))[[1]]),
-    c("darkblue", "green")
-  )
-  present_clusters <- unique(slingshot_df$clust.names)
-  n_clusters <- (sobj[["clust.names"]] %>% unique() %>% dim())[1]
-  FL_colours <- palette.colors(
-    n = n_clusters, palette = "Classic Tableau", recycle = TRUE
-  )
-  # names(FL_colours) <-
-  #   as.character(unique(sobj[["clust.names"]])[, 1])
-  names(FL_colours) <-
-    as.character(levels(sobj$clust.names))
-  cluster_annotation <- HeatmapAnnotation(
-    df = slingshot_df["clust.names"],
-    name = "clust.names",
-    col = list(clust.names = FL_colours[as.character(present_clusters)]),
-    annotation_legend_param = list(legend_direction = "horizontal",
-                                   title_position = "lefttop-rot")
-  )
-  return(
-    Heatmap(
-      mat = subset_matrix,
-      show_column_names = F,
-      show_row_names = show_row_names,
-      cluster_rows = cluster_features,
-      cluster_columns = F,
-      col = col_fun,
-      column_title = "Cells ordered by pseudotime -->",
-      row_title = "Module scores",
-      heatmap_legend_param = list(
-        title = "Expression",
-        title_position = "lefttop-rot"
-      ),
-      border_gp = gpar(col = "black", lty = "solid"),
-      column_order = slingshot_df$barcodes,
-      top_annotation = cluster_annotation,
-      use_raster = FALSE
-    )
-  )
-}
-
-
-#not only for motifs, also enhancers etc
-correlation_heatmap_motifs <- function(sobj = NULL,
-                                       end_cluster = NULL,
-                                       quant = .95,
-                                       slot_to_use = "data",
-                                       cluster_features = FALSE,
-                                       supplied_data = NULL,
-                                       assay = NULL,
-                                       show_row_names = FALSE,
-                                       use_raster = FALSE) {
-  end_cluster <- as.character(end_cluster)
-  quantil <- quantile(abs(correlations[[end_cluster]]),
-                      probs = quant, na.rm = T)
-  highest_features <-
-    rownames(sobj[[assay]]@data)[which(abs(correlations[[end_cluster]]) > quantil)]
-  slingshot_df <- sobj@meta.data
-  slingshot_df <- as.data.frame(
-    list(
-      "barcodes" = rownames(slingshot_df),
-      "clusters" = slingshot_df$clusters,
-      "pseudotime" = sobj@meta.data[, end_cluster]
-    )
-  ) %>%
-    arrange(pseudotime) %>%
-    drop_na()
-  do_motif_heatmap(
-    sobj = sobj,
-    features = highest_features,
-    slingshot_df = slingshot_df,
-    slot_to_use = slot_to_use,
-    cluster_features = cluster_features,
-    supplied_data = supplied_data,
-    assay = assay,
-    show_row_names = show_row_names,
-    use_raster = use_raster
-  ) +
-    labs(caption = end_cluster)
-}
-
-
-
-do_motif_heatmap <- function(sobj = NULL,
-                             features = NULL,
-                             slingshot_df,
-                             slot_to_use = "data",
-                             show_row_names = show_row_names,
-                             cluster_features = FALSE,
-                             supplied_data = NULL,
-                             assay = NULL,
-                             use_raster = use_raster) {
-  if (!is.null(supplied_data)) {
-    mat_to_use <- supplied_data
-  } else {
-    mat_to_use <- slot(sobj[[assay]], slot_to_use)
-    #mat_to_use <- sobj[[assay]]@data
-  }
-  subset_matrix <- mat_to_use[features,
-                              slingshot_df$barcodes] %>%
-    as.matrix()
-  col_fun <- colorRamp2(c(0, quantile(subset_matrix, probs = c(0.99))[[1]]),
-                        c("darkblue", "green"))
-  present_clusters <- unique(slingshot_df$clust.names)
-  n_clusters <- (sobj[["clust.names"]] %>% unique() %>% dim())[1]
-  FL_colours <- palette.colors(
-    n = n_clusters, palette = "Classic Tableau", recycle = TRUE
-  )
-  # names(FL_colours) <-
-  #   as.character(unique(sobj[["clust.names"]])[, 1])
-  names(FL_colours) <-
-    as.character(levels(sobj$clust.names))
-  cluster_annotation <- HeatmapAnnotation(
-    df = slingshot_df["clust.names"],
-    name = "clust.names",
-    col = list(clust.names = FL_colours[as.character(present_clusters)]),
-    annotation_legend_param = list(legend_direction = "horizontal",
-                                   title_position = "lefttop-rot")
-  )
-  return(
-    Heatmap(
-      mat = subset_matrix,
-      show_column_names = F,
-      show_row_names = show_row_names,
-      cluster_rows = cluster_features,
-      cluster_columns = F,
-      col = col_fun,
-      column_title = "Cells ordered by pseudotime -->",
-      row_title = "Features",
-      heatmap_legend_param = list(title = "Activity",
-                                  title_position = "lefttop-rot"),
-      border_gp = gpar(col = "black", lty = "solid"),
-      column_order = slingshot_df$barcodes,
-      top_annotation = cluster_annotation,
-      use_raster = use_raster
-    )
-  )
-}
-
-
-#added 2023-07-19
-da_enhancer_heatmap <- function(sobj = NULL,
-                                end_cluster = NULL,
-                                #quant = .95,
-                                slot_to_use = "data",
-                                cluster_features = FALSE,
-                                supplied_data = NULL,
-                                assay = NULL,
-                                show_row_names = FALSE,
-                                features = features,
-                                use_raster = FALSE) {
-  end_cluster <- as.character(end_cluster)
-  slingshot_df <- sobj@meta.data
-  slingshot_df <- as.data.frame(
-    list(
-      "barcodes" = rownames(slingshot_df),
-      "clusters" = slingshot_df$clusters,
-      "pseudotime" = sobj@meta.data[, end_cluster]
-    )
-  ) %>%
-    arrange(pseudotime) %>%
-    drop_na()
-  do_motif_heatmap(
-    sobj = sobj,
-    features = features,
-    slingshot_df = slingshot_df,
-    slot_to_use = slot_to_use,
-    cluster_features = cluster_features,
-    supplied_data = supplied_data,
-    assay = assay,
-    show_row_names = show_row_names,
-    use_raster = use_raster
-  ) +
-    labs(caption = end_cluster)
-}
-
-
 tf_dotplot <- function(sobj = NULL,
                        end_cluster = NULL,
                        assay = 'chromvar',
@@ -347,7 +24,7 @@ tf_dotplot <- function(sobj = NULL,
   slingshot_df <- as.data.frame(
     list(
       "barcodes" = rownames(slingshot_df),
-      "clust.names" = slingshot_df[, 'clust.names'], #slingshot_df[, 'clusters']
+      "clust.names" = slingshot_df[, 'clust.names'],
       "pseudotime" = slingshot_df[, end_cluster]
     )
   ) %>%
@@ -355,9 +32,8 @@ tf_dotplot <- function(sobj = NULL,
   
   if (assay == 'metadata') {
     plot_df <-
-      subset(sobj@meta.data, select = features) #change to include rownames in dataframe as column
+      subset(sobj@meta.data, select = features)
     colnames(plot_df) <- features
-    # rownames(plot_df) <- rownames(sobj@meta.data)
   } else {
     plot_df <- GetAssayData(object = sobj,
                             assay = assay,
@@ -367,7 +43,6 @@ tf_dotplot <- function(sobj = NULL,
   if (assay == 'chromvar') {
     motif.names <-
       ConvertMotifID(sobj@assays$peaks@motifs, id = rownames(plot_df))
-    #rownames(plot_df) <- motif.names #unnecessary since they will get messed up after transposing anyway
   }
   
   if (assay == 'metadata') {
@@ -485,23 +160,7 @@ tf_dotplot <- function(sobj = NULL,
   return(p)
 }
 
-make_pseudobulk <- function(sobj = NULL, assay = NULL, slot = 'data', avg.by = NULL){
-  
-  pseudobulk <- AggregateExpression(sobj, assays = assay, slot = slot) 
-  ps <- data.frame(pseudobulk[[assay]], check.names = F)
-  
-  if(! is.null(avg.by)){
-    cellcounts <- data.frame(table(sobj[[avg.by]]))
-    rownames(cellcounts) <- cellcounts[, avg.by]
-    cellcounts <- cellcounts[colnames(ps), ] # reorder according to pseudobulk df
-    ps <- t(t(ps)/cellcounts$Freq)
-  }
-  
-  return(ps)
-}
-
 # Cellradar
-
 DATAFILES <- list(
   "human" = paste0(ext_data_path, "cellradar_datasets/human.json"),
   "human_celltypes" = paste0(ext_data_path, "cellradar_datasets/human_celltypes.txt"),
