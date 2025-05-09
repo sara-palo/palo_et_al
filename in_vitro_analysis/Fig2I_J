@@ -1,0 +1,192 @@
+
+# Load required libraries
+library(tidyverse)
+library(readxl)
+library(patchwork)
+library(scales)
+library(forcats)
+library(ggplot2)
+
+# Set working directory and cutoff
+setwd("D:/LP/")
+cut_off <- 50
+
+# Define lineage colors
+lineage_colors <- c(
+  "B" = "#648FFF",
+  "NK" = "#785EF0",
+  "Mono" = "#DC267F",
+  "Mk" = "#FFB000",
+  "RBC" = "#FE6100"
+)
+
+# Load data
+df_all1 <- read_excel("LP12/LP12_RO.xls") %>% mutate(source = "LP12")
+df_all2 <- read_excel("LP13/LP13_RO.xls") %>% mutate(source = "LP13")
+df_all3 <- read_excel("LP14/LP14_RO.xls") %>%
+  mutate(source = case_when(
+    str_detect(...1, "^FL[123]") ~ "LP14A",
+    str_detect(...1, "^FL[456]") ~ "LP14B",
+    TRUE ~ "LP14"
+  ))
+
+# Combine all
+df_all <- bind_rows(df_all1, df_all2, df_all3)
+
+# Processing function
+process_df <- function(df) {
+  df %>%
+    mutate(
+      Sample = ...1,
+      Group = case_when(
+        str_detect(Sample, "^BM") ~ "BM",
+        str_detect(Sample, "^CB") ~ "CB",
+        str_detect(Sample, "^FL") ~ "FL"
+      ),
+      B_pos = B >= cut_off,
+      NK_pos = NK >= cut_off,
+      Mono_pos = Mono >= cut_off,
+      RBC_pos = RBC >= cut_off,
+      Mk_pos = Mk >= cut_off
+    )
+}
+
+df_all <- process_df(df_all)
+
+# Positivity category
+df_all <- df_all %>%
+  rowwise() %>%
+  mutate(
+    n_positive = sum(c_across(ends_with("_pos"))),
+    PositivityCategory = case_when(
+      n_positive == 0 ~ "non-defined",
+      n_positive == 1 ~ "1 positive",
+      n_positive == 2 ~ "2 positives",
+      n_positive >= 3 ~ "3+ positives"
+    )
+  ) %>%
+  ungroup() %>%
+  filter(!is.na(Group)) %>%
+  mutate(Group = factor(Group, levels = c("FL", "CB", "BM")))
+
+# Save for backup
+write.csv(df_all, "data_for_graph_LP12.13.14_cutoff50.csv")
+
+# Plot stacked and filled barplots for FL/BM
+df_flbm <- df_all %>% filter(Group %in% c("FL", "BM"))
+
+p1 <- ggplot(df_flbm, aes(x = Group, fill = PositivityCategory)) +
+  geom_bar(position = "stack") +
+  scale_fill_manual(values = c(
+    "non-defined" = "#DADAEB",
+    "1 positive" = "#4A1486",
+    "2 positives" = "#807DBA",
+    "3+ positives" = "#BCBDDC"
+  )) +
+  labs(title = "Number of lineage markers positive per sample (FL & BM)",
+       y = "# of wells", x = "Group") +
+  theme_minimal()
+
+p2 <- ggplot(df_flbm, aes(x = Group, fill = PositivityCategory)) +
+  geom_bar(position = "fill") +
+  scale_fill_manual(values = c(
+    "non-defined" = "#DADAEB",
+    "1 positive" = "#4A1486",
+    "2 positives" = "#807DBA",
+    "3+ positives" = "#BCBDDC"
+  )) +
+  labs(title = "Percentage of lineage markers positive per sample (FL & BM)",
+       y = "Proportion", x = "Group") +
+  theme_minimal()
+
+pdf("LP_clone_50_FL_BM.pdf", width = 8, height = 4)
+p1 + p2
+dev.off()
+
+# Add positivity combo and group_source
+df_all <- df_all %>%
+  rowwise() %>%
+  mutate(
+    PositivityCombo = paste(
+      c(if (B_pos) "B", if (NK_pos) "NK", if (Mono_pos) "Mono",
+        if (RBC_pos) "RBC", if (Mk_pos) "Mk"), collapse = "_"),
+    PositivityCombo = ifelse(PositivityCombo == "", "None", PositivityCombo)
+  ) %>%
+  ungroup() %>%
+  mutate(Group_source = paste(Group, source, sep = "_"))
+
+# Set ordered factor
+group_levels <- c(
+  "FL_LP12", "FL_LP13", "FL_LP14A", "FL_LP14B",
+  "CB_LP12", "CB_LP13", "CB_LP14",
+  "BM_LP12", "BM_LP13"
+)
+
+df_all$Group_source <- factor(df_all$Group_source, levels = group_levels)
+
+# Prepare long-form data
+df_pos_long <- df_all %>%
+  select(source, Group, Group_source, B_pos, NK_pos, Mk_pos, RBC_pos, Mono_pos) %>%
+  pivot_longer(cols = ends_with("_pos"), names_to = "Lineage", values_to = "Positive") %>%
+  mutate(Lineage = str_remove(Lineage, "_pos"),
+         Positive = as.numeric(Positive)) %>%
+  filter(Group != "CB")
+
+# Set plot labels
+group_labels <- c(
+  "FL_LP12" = "FL_9pcw",
+  "FL_LP13" = "FL_8.5pcw",
+  "FL_LP14A" = "FL_8pcw_#1",
+  "FL_LP14B" = "FL_8pcw_#2",
+  "BM_LP12" = "BM_#1",
+  "BM_LP13" = "BM_#2"
+)
+
+label_levels <- group_labels[names(group_labels)]
+
+# Prepare data for plotting
+plot_df <- df_pos_long %>%
+  mutate(Group_label = group_labels[as.character(Group_source)]) %>%
+  filter(!is.na(Group_label)) %>%
+  mutate(
+    Group_label = factor(Group_label, levels = label_levels),
+    PositiveLabel = ifelse(Positive == 1, Lineage, paste0("non-", Lineage))
+  ) %>%
+  group_by(Group_label, Lineage, PositiveLabel) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(Group_label, Lineage) %>%
+  mutate(proportion = n / sum(n)) %>%
+  ungroup()
+
+# Plot function
+plot_lineage_bar <- function(target_lineage, bar_color = "#648FFF") {
+  df <- plot_df %>% filter(Lineage == target_lineage)
+  df$PositiveLabel <- factor(df$PositiveLabel,
+                             levels = c(paste0("non-", target_lineage), target_lineage))
+  
+  ggplot(df, aes(x = Group_label, y = proportion, fill = PositiveLabel)) +
+    geom_bar(stat = "identity", width = 0.7, color = "black", position = "stack") +
+    scale_fill_manual(
+      values = setNames(c("black", bar_color),
+                        c(paste0("non-", target_lineage), target_lineage))
+    ) +
+    scale_y_continuous(labels = percent_format()) +
+    theme_classic(base_size = 14) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    labs(
+      title = paste(target_lineage, "positive ratio"),
+      x = "Group + Source", y = "Percent of total", fill = NULL
+    )
+}
+
+# Create plots
+p_b    <- plot_lineage_bar("B", "#648FFF")
+p_nk   <- plot_lineage_bar("NK", "#785EF0")
+p_mono <- plot_lineage_bar("Mono", "#DC267F")
+p_mk   <- plot_lineage_bar("Mk", "#FFB000")
+p_rbc  <- plot_lineage_bar("RBC", "#FE6100")
+
+# Save to PDF
+pdf("LP_positiveratio_50_FL_BM.pdf", width = 12, height = 6)
+wrap_plots(p_b, p_nk, p_mono, p_mk, p_rbc, ncol = 3)
+dev.off()
