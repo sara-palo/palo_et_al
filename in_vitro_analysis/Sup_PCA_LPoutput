@@ -1,0 +1,177 @@
+library(tidyverse)
+library(readxl)
+library(ggplot2)
+library(viridis)
+library(patchwork)
+lineage_colors <- c(
+  "B" = "#648FFF",
+  "NK" = "#785EF0",
+  "Mono" = "#DC267F",
+  "Mk" = "#FFB000",
+  "RBC" = "#FE6100"
+)
+
+origin_colors <- c(
+  "BM" = '#1b4b1f',
+  "FL" = '#1c6494'
+)
+
+# ========= 1. Read and preprocess RO files =========
+      read_and_format_ro <- function(filepath, source_label) {
+        df <- read_excel(filepath) %>%
+          mutate(source = source_label,
+                   Sample = ...1, 
+                   Group = case_when(
+                     grepl("^BM", Sample) ~ "BM",
+                     grepl("^CB", Sample) ~ "CB",
+                     grepl("^FL", Sample) ~ "FL")
+                 ) %>%
+          as.data.frame()
+        rownames(df) <- paste(df$source, df$...1, sep = "_")
+        df <- df[, !colnames(df) %in% "source"]
+        df <- df[, -1]  # remove ...1
+        return(df)
+      }
+      
+            LP12_RO <- read_and_format_ro("D:/LP/LP12/LP12_RO.xls", "LP12")
+            LP13_RO <- read_and_format_ro("D:/LP/LP13/LP13_RO.xls", "LP13")
+
+      read_and_format_ro_lp14 <- function(filepath) {
+        df <- read_excel(filepath) %>%
+          mutate(
+            Sample = ...1,
+            source = case_when(
+              grepl("^FL[1-3]", Sample) ~ "LP14A",
+              grepl("^FL[4-6]", Sample) ~ "LP14B",
+              TRUE ~ "LP14"  #
+            ))  %>%
+          as.data.frame()
+        
+        rownames(df) <- paste(df$source, df$Sample, sep = "_")
+        # ✅ rownames(df)  to Group
+        df$Group <- case_when(
+          grepl("_(BM)", rownames(df)) ~ "BM",
+          grepl("_(CB)", rownames(df)) ~ "CB",
+          grepl("_(FL)|LP14A_|LP14B_", rownames(df)) ~ "FL",
+          TRUE ~ NA_character_
+        )
+        df <- df[, !colnames(df) %in% c("source","...1")]  # delete unnecessary
+        return(df)
+      }
+            LP14_RO <- read_and_format_ro_lp14("D:/LP/LP14/LP14_RO.xls")
+
+
+
+
+
+
+combined <- rbind(LP12_RO, LP13_RO,LP14_RO) %>%
+  filter(!is.na(Group)) %>%
+  filter(Group %in% c("FL", "BM")) 
+
+
+
+# ========= 2. Remove B and NK columns for PCA, normalize by Alive =========
+combined_for_pca <- combined[, !colnames(combined) %in% c("B", "NK","Group","Sample")]
+alive_values <- combined_for_pca$Alive
+
+normalized <- combined_for_pca
+normalized[, colnames(normalized) != "Alive"] <- sweep(
+  normalized[, colnames(normalized) != "Alive"],
+  1,
+  alive_values,
+  FUN = "/"
+)
+normalized <- normalized[, colnames(normalized) != "Alive"]
+
+# ========= 3. PCA on normalized data =========
+pca_result <- prcomp(normalized, center = TRUE, scale. = TRUE)
+pca_df <- as.data.frame(pca_result$x)
+
+# ========= 4. Add origin label and raw marker counts =========
+pca_df$origin <- case_when(
+  grepl("_(BM)", rownames(pca_df)) ~ "BM",
+  grepl("_(CB)", rownames(pca_df)) ~ "CB",
+  grepl("_(FL)|LP14A_|LP14B_", rownames(pca_df)) ~ "FL"
+)
+pca_df <- pca_df %>% filter(!is.na(origin))
+
+
+
+#rename
+pca_df$B_ratio   <- normalized[rownames(pca_df), "B(inclCD11b)"]
+pca_df$NK_ratio   <- normalized[rownames(pca_df), "NKp46+(inclCD11b)"]
+pca_df$Mono_ratio <- normalized[rownames(pca_df), "Mono"]
+pca_df$RBC_ratio  <- normalized[rownames(pca_df), "RBC"]
+pca_df$Mk_ratio  <- normalized[rownames(pca_df), "Mk"]
+
+# ========= 5. Plot individual marker distributions in PCA =========
+
+p1 <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = B_ratio)) +
+  geom_point(size = 2.5, shape = 21, color = "black", stroke = 0.3) +
+  scale_fill_gradient(low = "white", high = lineage_colors["B"]) +
+  theme_classic() +
+  labs(title = "B cell ratio", fill = "B / Alive")
+
+p2 <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = NK_ratio)) +
+  geom_point(size = 2.5, shape = 21, color = "black", stroke = 0.3) +
+  scale_fill_gradient(low = "white", high = lineage_colors["NK"]) +
+  theme_classic() +
+  labs(title = "NK cell ratio", fill = "NK / Alive")
+
+p3 <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = Mono_ratio)) +
+  geom_point(size = 2.5, shape = 21, color = "black", stroke = 0.3) +
+  scale_fill_gradient(low = "white", high = lineage_colors["Mono"]) +
+  theme_classic() +
+  labs(title = "Mono cell ratio", fill = "Mono / Alive")
+
+p4 <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = RBC_ratio)) +
+  geom_point(size = 2.5, shape = 21, color = "black", stroke = 0.3) +
+  scale_fill_gradient(low = "white", high = lineage_colors["RBC"]) +
+  theme_classic() +
+  labs(title = "RBC cell ratio", fill = "RBC / Alive")
+
+p5 <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = Mk_ratio)) +
+  geom_point(size = 2.5, shape = 21, color = "black", stroke = 0.3) +
+  scale_fill_gradient(low = "white", high = lineage_colors["Mk"]) +
+  theme_classic() +
+  labs(title = "Mgk cell ratio", fill = "Mk / Alive")
+
+
+p6 <- ggplot(pca_df, aes(x = PC1, y = PC2)) +
+  geom_point(aes(color = origin), size = 1.5, alpha = 0.5) +
+  scale_color_manual(values = origin_colors) +
+  scale_fill_manual(values = origin_colors) +
+  
+  theme_classic(base_size = 14) +
+  theme(
+    legend.position = "right",
+    axis.text = element_text(color = "black"),
+    axis.line = element_line(color = "black")
+  ) +
+  labs(
+    title = "PCA by origin (density overlay)",
+    x = "PC1", y = "PC2",
+    color = "Origin",
+    fill = "Density"
+  )
+
+
+
+# ========= 6. Combine and save plots =========
+pdf("PCA_marker_ratios_by_origin.pdf", width = 12, height = 8)
+print(p1 + p2 + p3 + p4 + p5 + p6)
+dev.off()
+# ========= 7. Facet by origin =========
+pdf("PCA_marker_split_by_origin.pdf", width = 8, height = 4)
+ggplot(pca_df, aes(x = PC1, y = PC2, color = origin)) +  
+  geom_point(size = 3) +
+  scale_color_manual(values = origin_colors) +
+  scale_fill_manual(values = origin_colors) +
+  theme_classic() +
+  labs(title = "PCA split by origin (FL, BM)",
+       x = "PC1", y = "PC2") +
+  facet_wrap(~ origin)
+dev.off()
+
+
