@@ -71,6 +71,15 @@ ggplot(combined, aes(x = l2_ps, y = UCell_Score, color = group)) +
        x = "l2_ps", y = "UCell Score")
 dev.off()
 
+pdf("Ly2_GMP_scoring_Ly2_Trajectory_wo_band.pdf", height = 4, width = 8)
+ggplot(combined, aes(x = l2_ps, y = UCell_Score, color = group)) +
+  geom_point(alpha = 0.3, stroke = 0) +
+  geom_smooth(method = "gam", formula = y ~ s(x), se = TRUE, size = 1) +
+  scale_color_manual(values = c("FL: Ly2" = '#793885', "FL: GMP" = "#56ace5")) +
+  theme_classic() +
+  labs(title = "Ly2/GMP scoring in Ly2 Trajectories (last 10% highlighted)",
+       x = "l2_ps", y = "UCell Score")
+dev.off()
 # GMP trajectory
 ly_df <- FetchData(FL, vars = c("gmp_ps", "ly_in_FL_UCell")) %>%
   mutate(group = "FL: Ly2", UCell_Score = ly_in_FL_UCell) %>%
@@ -97,6 +106,15 @@ ggplot(combined, aes(x = gmp_ps, y = UCell_Score, color = group)) +
        x = "gmp_ps", y = "UCell Score")
 dev.off()
 
+pdf("Ly2_GMP_scoring_GMP_Trajectory_wo_band.pdf", height = 4, width = 8)
+ggplot(combined, aes(x = gmp_ps, y = UCell_Score, color = group)) +
+  geom_point(alpha = 0.3, stroke = 0) +
+  geom_smooth(method = "gam", formula = y ~ s(x), se = TRUE, size = 1) +
+  scale_color_manual(values = c("FL: Ly2" = '#793885', "FL: GMP" = "#56ace5")) +
+  theme_classic() +
+  labs(title = "Ly2/GMP scoring in GMP Trajectories (last 10% highlighted)",
+       x = "gmp_ps", y = "UCell Score")
+dev.off()
 # Compare differences in last 10% bins
 FL$l2_ps_cut <- cut(FL$l2_ps, breaks = 10)
 FL$gmp_ps_cut <- cut(FL$gmp_ps, breaks = 10)
