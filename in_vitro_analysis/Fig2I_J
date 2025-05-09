@@ -1,4 +1,3 @@
-
 # Load required libraries
 library(tidyverse)
 library(readxl)
@@ -190,3 +189,94 @@ p_rbc  <- plot_lineage_bar("RBC", "#FE6100")
 pdf("LP_positiveratio_50_FL_BM.pdf", width = 12, height = 6)
 wrap_plots(p_b, p_nk, p_mono, p_mk, p_rbc, ncol = 3)
 dev.off()
+
+
+# === 1. Filter for positive cases only ===
+plot_df_pos_only <- plot_df %>%
+  filter(PositiveLabel == Lineage)
+
+# === 2. Ensure all Group_label × Lineage combinations exist ===
+all_combinations <- expand.grid(
+  Group_label = unique(plot_df$Group_label),
+  Lineage = unique(plot_df$Lineage)
+)
+
+# === 3. Join with actual data and replace missing proportions with 0 ===
+plot_df_pos_filled <- all_combinations %>%
+  left_join(plot_df_pos_only, by = c("Group_label", "Lineage")) %>%
+  mutate(
+    proportion = replace_na(proportion, 0),
+    Group = str_extract(as.character(Group_label), "^[^_]+")  # Extract 'FL', 'BM', etc.
+  )
+
+# === 4. Calculate group-wise mean and standard error (SE) ===
+summary_df <- plot_df_pos_filled %>%
+  group_by(Group, Lineage) %>%
+  summarise(
+    mean_prop = mean(proportion),
+    se_prop = sd(proportion) / sqrt(n()),
+    .groups = "drop"
+  )
+
+# === 5. Define target lineages to plot ===
+lineages <- c("B", "NK", "Mono", "Mk", "RBC")
+
+# === 6. Loop through each lineage and generate plots ===
+for (this_lineage in lineages) {
+  
+  # Subset for the current lineage
+  df_sub <- summary_df %>% filter(Lineage == this_lineage)
+  
+  # Create a dummy data frame for the 100% background bars
+  df_background <- df_sub %>%
+    mutate(mean_prop = 1.0)
+  
+  # Ensure consistent group order
+  df_sub$Group <- factor(df_sub$Group, levels = c("FL", "BM", "CB"))
+  df_background$Group <- factor(df_background$Group, levels = c("FL", "BM", "CB"))
+  
+  # Generate the bar plot with background, actual values, error bars, and labels
+  p <- ggplot() +
+    geom_bar(
+      data = df_background,
+      aes(x = Group, y = mean_prop),
+      stat = "identity",
+      fill = "gray90",
+      width = 0.6
+    ) +
+    geom_bar(
+      data = df_sub,
+      aes(x = Group, y = mean_prop, fill = Lineage),
+      stat = "identity",
+      width = 0.6
+    ) +
+    geom_errorbar(
+      data = df_sub,
+      aes(x = Group, ymin = mean_prop - se_prop, ymax = mean_prop + se_prop),
+      width = 0.2
+    ) +
+    geom_text(
+      data = df_sub,
+      aes(x = Group, y = mean_prop + se_prop + 0.1,
+          label = scales::percent(mean_prop, accuracy = 1)),
+      size = 3.5
+    ) +
+    scale_fill_manual(values = lineage_colors[this_lineage]) +
+    labs(
+      title = paste("Output of", this_lineage, "(± SE)"),
+      y = "Mean proportion of positive wells",
+      x = "Group"
+    ) +
+    theme_classic() +
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  # Save the plot as a PDF
+  ggsave(
+    filename = paste0("plot_", this_lineage, ".pdf"),
+    plot = p,
+    width = 5,
+    height = 4
+  )
+}
+
+
