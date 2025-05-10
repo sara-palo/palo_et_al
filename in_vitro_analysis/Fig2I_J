@@ -12,11 +12,11 @@ cut_off <- 50
 
 # Define lineage colors
 lineage_colors <- c(
-  "B" = "#648FFF",
-  "NK" = "#785EF0",
-  "Mono" = "#DC267F",
-  "Mk" = "#FFB000",
-  "RBC" = "#FE6100"
+  "B" = "#785EF0",
+  "NK" = "lightgreen",
+  "Mono" = "#648FFF",
+  "Mk" = "lightpink2",
+  "RBC" = "red"
 )
 
 # Load data
@@ -84,7 +84,7 @@ p1 <- ggplot(df_flbm, aes(x = Group, fill = PositivityCategory)) +
   )) +
   labs(title = "Number of lineage markers positive per sample (FL & BM)",
        y = "# of wells", x = "Group") +
-  theme_minimal()
+  theme_classic()
 
 p2 <- ggplot(df_flbm, aes(x = Group, fill = PositivityCategory)) +
   geom_bar(position = "fill") +
@@ -96,7 +96,7 @@ p2 <- ggplot(df_flbm, aes(x = Group, fill = PositivityCategory)) +
   )) +
   labs(title = "Percentage of lineage markers positive per sample (FL & BM)",
        y = "Proportion", x = "Group") +
-  theme_minimal()
+  theme_classic()
 
 pdf("LP_clone_50_FL_BM.pdf", width = 8, height = 4)
 p1 + p2
@@ -166,7 +166,7 @@ plot_lineage_bar <- function(target_lineage, bar_color = "#648FFF") {
   ggplot(df, aes(x = Group_label, y = proportion, fill = PositiveLabel)) +
     geom_bar(stat = "identity", width = 0.7, color = "black", position = "stack") +
     scale_fill_manual(
-      values = setNames(c("black", bar_color),
+      values = setNames(c("grey", bar_color),
                         c(paste0("non-", target_lineage), target_lineage))
     ) +
     scale_y_continuous(labels = percent_format()) +
@@ -178,12 +178,12 @@ plot_lineage_bar <- function(target_lineage, bar_color = "#648FFF") {
     )
 }
 
-# Create plots
-p_b    <- plot_lineage_bar("B", "#648FFF")
-p_nk   <- plot_lineage_bar("NK", "#785EF0")
-p_mono <- plot_lineage_bar("Mono", "#DC267F")
-p_mk   <- plot_lineage_bar("Mk", "#FFB000")
-p_rbc  <- plot_lineage_bar("RBC", "#FE6100")
+
+p_b    <- plot_lineage_bar("B", "#785EF0")
+p_nk   <- plot_lineage_bar("NK", "lightgreen")
+p_mono <- plot_lineage_bar("Mono","#648FFF")
+p_mk   <- plot_lineage_bar("Mk", "lightpink2")
+p_rbc  <- plot_lineage_bar("RBC", "red")
 
 # Save to PDF
 pdf("LP_positiveratio_50_FL_BM.pdf", width = 12, height = 6)
