@@ -115,14 +115,19 @@ ggplot(combined, aes(x = gmp_ps, y = UCell_Score, color = group)) +
   labs(title = "Ly2/GMP scoring in GMP Trajectories (last 10% highlighted)",
        x = "gmp_ps", y = "UCell Score")
 dev.off()
+
+
+
 # Compare differences in last 10% bins
 FL$l2_ps_cut <- cut(FL$l2_ps, breaks = 10)
 FL$gmp_ps_cut <- cut(FL$gmp_ps, breaks = 10)
 
-l2_df <- FL@meta.data[FL$l2_ps_cut == levels(FL$l2_ps_cut)[10], c("ly_in_FL_UCell", "gmp_in_FL_UCell")]
+l2_df <- FL@meta.data[FL$l2_ps_cut == levels(FL$l2_ps_cut)[10], c("ly_in_FL_UCell", "gmp_in_FL_UCell","l2_ps")]
+l2_df <- na.omit(l2_df)
 l2_df$diff <- l2_df$ly_in_FL_UCell - l2_df$gmp_in_FL_UCell
 
 gmp_df <- FL@meta.data[FL$gmp_ps_cut == levels(FL$gmp_ps_cut)[10], c("ly_in_FL_UCell", "gmp_in_FL_UCell")]
+gmp_df <- na.omit(gmp_df)
 gmp_df$diff <- gmp_df$gmp_in_FL_UCell - gmp_df$ly_in_FL_UCell
 
 # Wilcoxon test
@@ -130,9 +135,9 @@ wc <- wilcox.test(l2_df$diff, gmp_df$diff)
 
 # Summary stats
 stats_df <- data.frame(
-  ly_ps_mean_diff = mean(l2_df$diff),
+  l2_ps_mean_diff = mean(l2_df$diff),
   my_ps_mean_diff = mean(gmp_df$diff),
-  ly_ps_median_diff = median(l2_df$diff),
+  l2_ps_median_diff = median(l2_df$diff),
   my_ps_median_diff = median(gmp_df$diff),
   wilcox_pval = wc$p.value
 )
