@@ -8,12 +8,12 @@ set.seed(123)
 
 # === Prepare expression data ===
 FL <- readRDS(file="FL_CITE_trajectory.rds")
-    DefaultAssay(FL)<-"RNA"
-    ly_data_fl <- FetchData(FL, vars = c("l2_ps", "EBF1","HOXB7","SPIB", "TCF3"))
-    ly_data_fl <- na.omit(ly_data_fl)
-    ly_data_fl <- ly_data_fl %>%
-      pivot_longer(cols = c("EBF1", "HOXB7", "SPIB",  "TCF3"), names_to = "Gene", values_to = "Expression") %>%
-      mutate(Expression = scale(Expression))
+DefaultAssay(FL)<-"RNA"
+ly_data_fl <- FetchData(FL, vars = c("l2_ps", "EBF1","HOXB7","SPIB", "TCF3"))
+ly_data_fl <- na.omit(ly_data_fl)
+ly_data_fl <- ly_data_fl %>%
+  pivot_longer(cols = c("EBF1", "HOXB7", "SPIB",  "TCF3"), names_to = "Gene", values_to = "Expression") %>%
+  mutate(Expression = scale(Expression))
 
 
 tf_dotplot_l2ps <- function(data = NULL,
@@ -66,23 +66,23 @@ tf_dotplot_l2ps <- function(data = NULL,
 }
 
 # === Generate and save plot ===
-    plot_ly <- tf_dotplot_l2ps(data = ly_data_fl, features = c("EBF1", "HOXB7", "SPIB",  "TCF3","PAX5"))
-    print(plot_ly)
-            
-        pdf(file="250311_Ly2_trajectory_4TFs.pdf", height = 4, width = 8)
-        print(plot_ly)
-        dev.off()
+plot_ly <- tf_dotplot_l2ps(data = ly_data_fl, features = c("EBF1", "HOXB7", "SPIB",  "TCF3","PAX5"))
+print(plot_ly)
+
+pdf(file="250311_Ly2_trajectory_4TFs.pdf", height = 4, width = 8)
+print(plot_ly)
+dev.off()
 
 
 
 
 # === Prepare expression data ===
-gmp_data_fl <- as.data.frame(t(GetAssayData(FL, assay = "RNA", layer = "scale.data")[c("EBF1", "HOXB7", "SPIB", "CEBPA","PAX5"), ])) %>%
-  rownames_to_column("Cell") 
-gmp_ps_data <- FetchData(FL, vars = "gmp_ps") %>%
-  rownames_to_column("Cell") 
-gmp_data_fl <- inner_join(gmp_data_fl, gmp_ps_data, by = "Cell") %>%
-  pivot_longer(cols = -c(Cell, gmp_ps), names_to = "Gene", values_to = "Expression")
+gmp_data_fl <- FetchData(FL, vars = c("gmp_ps", "EBF1","HOXB7","SPIB", "CEBPA"))
+gmp_data_fl <- na.omit(gmp_data_fl)
+gmp_data_fl <- gmp_data_fl %>%
+  pivot_longer(cols = c("EBF1", "HOXB7", "SPIB",  "CEBPA"), names_to = "Gene", values_to = "Expression") %>%
+  mutate(Expression = scale(Expression))
+
 
 tf_dotplot_gmp_ps <- function(data = NULL,
                               features = NULL,
@@ -119,7 +119,7 @@ tf_dotplot_gmp_ps <- function(data = NULL,
     p <- p + annotate("rect", xmin = mark_range[1], xmax = mark_range[2], 
                       ymin = ymin, ymax = ymax, fill = "lightgrey", alpha = 0.3)
   }
-    return(p)
+  return(p)
 }
 
 # === Generate and save plot ===
@@ -129,5 +129,4 @@ plot_gmp <- tf_dotplot_gmp_ps(data = gmp_data_fl,
 pdf(file="250311_gmp_trajectory_4TFs.pdf", height = 4, width = 8)
 print(plot_gmp)
 dev.off()
-
 
