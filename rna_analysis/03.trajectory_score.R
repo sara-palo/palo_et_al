@@ -24,9 +24,8 @@ gmp_signature <- list(gmp_in_FL = c(gmp_pos, gmp_neg))
 
 # Score with UCell
 expr_data <- FL@assays$RNA@counts
-FL <- AddMetaData(FL, metadata = ScoreSignatures_UCell(expr_data, features = ly_signature))
-FL <- AddMetaData(FL, metadata = ScoreSignatures_UCell(expr_data, features = gmp_signature))
-
+FL <- AddMetaData(FL, metadata = ScoreSignatures_UCell(expr_data, features = ly_signature), col.name = "ly_in_FL_UCell")
+FL <- AddMetaData(FL, metadata = ScoreSignatures_UCell(expr_data, features = gmp_signature), col.name = "gmp_in_FL_UCell")
 # Set cluster identity order
 FL <- SetIdent(FL, value = factor(Idents(FL), levels = c("HSC", "Ly-II", "GMP")))
 
@@ -157,3 +156,4 @@ ggplot(plot_df, aes(x = group, y = diff, fill = group)) +
   theme_classic(base_size = 14) +
   theme(legend.position = "none")
 dev.off()
+
