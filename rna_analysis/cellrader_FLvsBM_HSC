@@ -1,0 +1,153 @@
+# Cellradar
+setwd(dir="D:/seurat4/")
+ext_data_path <- "D:/seurat4/"
+DATAFILES <- list(
+  "human" = paste0(ext_data_path, "cellradar_datasets/human.json"),
+  "human_celltypes" = paste0(ext_data_path, "cellradar_datasets/human_celltypes.txt"),
+  "mouse" = paste0(ext_data_path, "cellradar_datasets/mouse.json"),
+  "mouse_celltypes" = paste0(ext_data_path, "cellradar_datasets/mouse_celltypes.txt")
+)
+
+prep_data <- function(dataset, genes) {
+  normalize <- function(a) {
+    a <- a - min(a)
+    a <- a / max(a)
+    return(c(a, a[1]))
+  }
+  
+  blank_return <- list()
+  
+  if (length(genes) == 0) {
+    return(c(blank_return, list(msg = "Please enter at least one gene name")))
+  }
+  if (!(dataset %in% names(DATAFILES))) {
+    return(list(msg = "Selected dataset is invalid"))
+  }
+  genes <- toupper(gsub("[^0-9a-zA-Z]+-", "", genes))
+  
+  ref_data <- fromJSON(DATAFILES[[dataset]])
+  celltypes <- read.csv(str_c(ext_data_path, "cellradar_datasets/", dataset, "_celltypes.txt"), header = F)[[1]]
+  data_mean <- data.frame(matrix(ncol = length(celltypes)))[-1,]
+  colnames(data_mean) = celltypes
+  data_std <- data.frame(matrix(ncol = length(celltypes)))[-1,]
+  colnames(data_std) = celltypes
+  gene_order <- c()
+  lookup <- list()
+  nonexisting_genes <- c()
+  
+  for (i in genes) {
+    if (i %in% names(lookup)) {
+      next
+    } else if (!(i %in% names(ref_data))) {
+      nonexisting_genes <- c(nonexisting_genes, i)
+    } else {
+      values <- ref_data[[i]]
+      data_mean[i, ] <- values[1,]
+      data_std[i, ] <- values[2,]
+      lookup[[i]] <- NULL
+      gene_order <- c(gene_order, i)
+    }
+  }
+  
+  if (length(gene_order) == 0) {
+    return(list(msg = "None of the entered gene names is valid"))
+  }
+  
+  y1 <- normalize(apply(data_mean, 2, median))
+  y2 <- normalize(apply(data_mean - data_std, 2, median))
+  y3 <- normalize(apply(data_mean + data_std, 2, median))
+  
+  return(list(
+    mean_df = data_mean,
+    std_df = data_std,
+    values = list(y1, y2, y3),
+    nonexisting_genes = nonexisting_genes
+  ))
+}
+
+plot_cellradar <- function(res_list = NULL,
+                           colors = NULL,
+                           names = NULL,
+                           opac = NULL,
+                           print_negs = TRUE) {
+  neg_list <- list()
+  
+  fig <- plot_ly(
+    type = 'scatterpolar',
+    fill = 'toself',
+    mode = 'lines',
+    line = list(shape = 'spline')
+  )
+  
+  if (is.null(opac)){
+    opac <- rep(1, length(res_list))
+  }
+  
+  for (i in 1:length(res_list)) {
+    res <- res_list[[i]]
+    
+    neg_list[[i]] <- res$nonexisting_genes
+    
+    fig <- add_trace(
+      fig,
+      r = res$values[[1]],
+      theta = names(res$values[[1]]),
+      name = names[i],
+      color = I(colors[i]),
+      opacity = opac[i]
+    )
+  }
+  
+  fig <- layout(fig, polar = list(
+    angularaxis = list(direction = 'clockwise'),
+    radialaxis = list(visible = F, range = c(0, 1))
+  ))
+  if(print_negs){print(neg_list)}
+  return(fig)
+}
+
+library(Seurat)
+library(stringr)
+library(jsonlite)
+seurat <- readRDS(file="D:/seurat4/FL_BM.combined0426.rds")
+getwd()
+hsc <- subset(seurat,combined_clusts %in% c("FL_HSC", "BM_HSC-I", "BM_HSC-II", "BM_HSC-III"))
+Idents(hsc) <- "dataset"
+FL_dif <- FindMarkers(hsc,ident.1 = "FL",ident.2 = "BM", only.pos = T)
+FL_dif <- subset(FL_dif, FL_dif$p_val_adj < 0.05 & FL_dif$avg_log2FC >1)
+  write.csv(FL_dif,file="FL_dif.csv")
+
+res_fl <- prep_data(dataset = 'human', genes = rownames(FL_dif))
+plot_cellradar(res_fl)
+fig_fl <- plot_cellradar(
+  res_list = list(res_fl),
+  colors = c("blue"),
+  names = c("FL")
+)
+fig_fl
+
+missinggenes <- data.frame('FL' = str_flatten(res_fl$nonexisting_genes, collapse = ','),
+                           'BM' = str_flatten(res_bm$nonexisting_genes, collapse = ','))
+
+
+
+BM_dif <- FindMarkers(hsc,ident.1 = "BM",ident.2 = "FL", only.pos = T)
+BM_dif <- subset(BM_dif, BM_dif$p_val_adj < 0.05 & BM_dif$avg_log2FC >1)
+  write.csv(BM_dif,file="BM_dif.csv")
+res_bm <- prep_data(dataset = 'human', genes = rownames(BM_dif))
+plot_cellradar(res_bm)
+fig_bm <- plot_cellradar(
+  res_list = list(res_bm),
+  colors = c("green"),
+  names = c("BM")
+)
+fig_bm
+
+missinggenes <- data.frame('FL' = str_flatten(res_fl$nonexisting_genes, collapse = ','),
+                           'BM' = str_flatten(res_bm$nonexisting_genes, collapse = ','))
+fig_combined <- plot_cellradar(
+  res_list = list(res_fl, res_bm),
+  colors = c("blue", "green"),
+  names = c("FL", "BM")
+)
+fig_combined
