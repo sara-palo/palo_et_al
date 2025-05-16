@@ -4,7 +4,7 @@ library(ggplot2)
 library(viridis)
 library(patchwork)
 set.seed(123)
-setwd("C:/Users/keiki/Desktop/Sara_project")##set work dicrectory
+setwd("")##set work dicrectory
 
 lineage_colors <- c(
   "B" = "#785EF0",
