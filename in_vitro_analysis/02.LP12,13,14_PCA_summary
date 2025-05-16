@@ -3,12 +3,15 @@ library(readxl)
 library(ggplot2)
 library(viridis)
 library(patchwork)
+set.seed(123)
+setwd("C:/Users/keiki/Desktop/Sara_project")##set work dicrectory
+
 lineage_colors <- c(
-  "B" = "#648FFF",
-  "NK" = "#785EF0",
-  "Mono" = "#DC267F",
-  "Mk" = "#FFB000",
-  "RBC" = "#FE6100"
+  "B" = "#785EF0",
+  "NK" = "lightgreen",
+  "Mono" = "#648FFF",
+  "Mk" = "lightpink2",
+  "RBC" = "red"
 )
 
 origin_colors <- c(
@@ -33,8 +36,8 @@ origin_colors <- c(
         return(df)
       }
       
-            LP12_RO <- read_and_format_ro("D:/LP/LP12/LP12_RO.xls", "LP12")
-            LP13_RO <- read_and_format_ro("D:/LP/LP13/LP13_RO.xls", "LP13")
+            LP12_RO <- read_and_format_ro("LP12_RO.xls", "LP12")
+            LP13_RO <- read_and_format_ro("LP13_RO.xls", "LP13")
 
       read_and_format_ro_lp14 <- function(filepath) {
         df <- read_excel(filepath) %>%
@@ -58,7 +61,7 @@ origin_colors <- c(
         df <- df[, !colnames(df) %in% c("source","...1")]  # delete unnecessary
         return(df)
       }
-            LP14_RO <- read_and_format_ro_lp14("D:/LP/LP14/LP14_RO.xls")
+            LP14_RO <- read_and_format_ro_lp14("LP14_RO.xls")
 
 
 
@@ -98,7 +101,7 @@ pca_df <- pca_df %>% filter(!is.na(origin))
 
 
 
-#rename
+
 pca_df$B_ratio   <- normalized[rownames(pca_df), "B(inclCD11b)"]
 pca_df$NK_ratio   <- normalized[rownames(pca_df), "NKp46+(inclCD11b)"]
 pca_df$Mono_ratio <- normalized[rownames(pca_df), "Mono"]
@@ -108,41 +111,40 @@ pca_df$Mk_ratio  <- normalized[rownames(pca_df), "Mk"]
 # ========= 5. Plot individual marker distributions in PCA =========
 
 p1 <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = B_ratio)) +
-  geom_point(size = 2.5, shape = 21, color = "black", stroke = 0.3) +
+  geom_point(size = 3, shape = 21, color = "black", stroke = 0.3) +
   scale_fill_gradient(low = "white", high = lineage_colors["B"]) +
   theme_classic() +
   labs(title = "B cell ratio", fill = "B / Alive")
 
-p2 <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = NK_ratio)) +
-  geom_point(size = 2.5, shape = 21, color = "black", stroke = 0.3) +
+p4 <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = NK_ratio)) +
+  geom_point(size = 3, shape = 21, color = "black", stroke = 0.3) +
   scale_fill_gradient(low = "white", high = lineage_colors["NK"]) +
   theme_classic() +
   labs(title = "NK cell ratio", fill = "NK / Alive")
 
 p3 <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = Mono_ratio)) +
-  geom_point(size = 2.5, shape = 21, color = "black", stroke = 0.3) +
+  geom_point(size = 3, shape = 21, color = "black", stroke = 0.3) +
   scale_fill_gradient(low = "white", high = lineage_colors["Mono"]) +
   theme_classic() +
   labs(title = "Mono cell ratio", fill = "Mono / Alive")
 
-p4 <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = RBC_ratio)) +
-  geom_point(size = 2.5, shape = 21, color = "black", stroke = 0.3) +
+p2 <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = RBC_ratio)) +
+  geom_point(size = 3, shape = 21, color = "black", stroke = 0.3) +
   scale_fill_gradient(low = "white", high = lineage_colors["RBC"]) +
   theme_classic() +
-  labs(title = "RBC cell ratio", fill = "RBC / Alive")
+  labs(title = "Ery cell ratio", fill = "Ery / Alive")
 
 p5 <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = Mk_ratio)) +
-  geom_point(size = 2.5, shape = 21, color = "black", stroke = 0.3) +
+  geom_point(size = 3, shape = 21, color = "black", stroke = 0.3) +
   scale_fill_gradient(low = "white", high = lineage_colors["Mk"]) +
   theme_classic() +
   labs(title = "Mgk cell ratio", fill = "Mk / Alive")
 
 
 p6 <- ggplot(pca_df, aes(x = PC1, y = PC2)) +
-  geom_point(aes(color = origin), size = 1.5, alpha = 0.5) +
-  scale_color_manual(values = origin_colors) +
+  geom_point(aes(shape = origin, fill = origin), size = 4, color = "black", stroke = 0.4, alpha = 0.5) +
+  scale_shape_manual(values = c("BM" = 25, "FL" = 21)) +
   scale_fill_manual(values = origin_colors) +
-  
   theme_classic(base_size = 14) +
   theme(
     legend.position = "right",
@@ -150,28 +152,53 @@ p6 <- ggplot(pca_df, aes(x = PC1, y = PC2)) +
     axis.line = element_line(color = "black")
   ) +
   labs(
-    title = "PCA by origin (density overlay)",
+    title = "PCA by origin (with shape)",
     x = "PC1", y = "PC2",
-    color = "Origin",
-    fill = "Density"
+    shape = "Origin",
+    fill = "Origin"
   )
 
 
-
-# ========= 6. Combine and save plots =========
-pdf("PCA_marker_ratios_by_origin.pdf", width = 12, height = 8)
 print(p1 + p2 + p3 + p4 + p5 + p6)
-dev.off()
-# ========= 7. Facet by origin =========
-pdf("PCA_marker_split_by_origin.pdf", width = 8, height = 4)
-ggplot(pca_df, aes(x = PC1, y = PC2, color = origin)) +  
-  geom_point(size = 3) +
+
+
+
+p7 <- ggplot(pca_df, aes(x = PC1, y = PC2)) +
+  stat_density_2d(aes(fill = origin), geom = "polygon", alpha = 0.1, color = NA) +
+  geom_point(aes(color = origin), size = 3, alpha = 0.6) +
   scale_color_manual(values = origin_colors) +
   scale_fill_manual(values = origin_colors) +
-  theme_classic() +
-  labs(title = "PCA split by origin (FL, BM)",
-       x = "PC1", y = "PC2") +
-  facet_wrap(~ origin)
-dev.off()
+  theme_classic(base_size = 14) +
+  theme(
+    legend.position = "right",
+    axis.text = element_text(color = "black"),
+    axis.line = element_line(color = "black")
+  ) +
+  labs(
+    title = "PCA by origin with filled density contours",
+    x = "PC1", y = "PC2",
+    color = "Origin",
+    fill = "Origin"
+  )
 
+xlims <- range(pca_df$PC1, na.rm = TRUE)
+ylims <- range(pca_df$PC2, na.rm = TRUE)
 
+  p8_FL <- ggplot(pca_df %>% filter(origin == "FL"), aes(x = PC1, y = PC2)) +
+    stat_density_2d(geom = "polygon", fill = 'lightblue', alpha = 0.7, color = NA,bins = 5) +
+    geom_point(shape = 21, fill = origin_colors["FL"], color = "black", stroke = 0.4, size = 1.5, alpha = 0.7) +
+    xlim(xlims) + ylim(ylims) +
+    theme_classic() +
+    labs(title = "FL", x = "PC1", y = "PC2")
+  
+
+  p8_BM <- ggplot(pca_df %>% filter(origin == "BM"), aes(x = PC1, y = PC2)) +
+    stat_density_2d(geom = "polygon", fill = 'lightgreen', alpha = 0.7, color = NA,bins = 50) +
+    geom_point(shape = 21, fill = origin_colors["BM"], color = "black", stroke = 0.4, size = 1.5, alpha = 0.7) +
+    xlim(xlims) + ylim(ylims) +
+    theme_classic() +
+    labs(title = "BM", x = "PC1", y = "PC2")
+  
+  pdf("PCA_marker_ratios_by_origin3.pdf", width = 10, height = 8)
+  print(p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8_FL+p8_BM)
+  dev.off()
