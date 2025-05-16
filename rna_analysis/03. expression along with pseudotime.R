@@ -129,4 +129,3 @@ plot_gmp <- tf_dotplot_gmp_ps(data = gmp_data_fl,
 pdf(file="250311_gmp_trajectory_4TFs.pdf", height = 4, width = 8)
 print(plot_gmp)
 dev.off()
-
