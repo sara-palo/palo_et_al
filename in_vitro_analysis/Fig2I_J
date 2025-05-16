@@ -7,8 +7,10 @@ library(forcats)
 library(ggplot2)
 
 # Set working directory and cutoff
-setwd("D:/LP/")
+
+setwd("")##set work dicrectory
 cut_off <- 50
+
 
 # Define lineage colors
 lineage_colors <- c(
@@ -20,9 +22,9 @@ lineage_colors <- c(
 )
 
 # Load data
-df_all1 <- read_excel("LP12/LP12_RO.xls") %>% mutate(source = "LP12")
-df_all2 <- read_excel("LP13/LP13_RO.xls") %>% mutate(source = "LP13")
-df_all3 <- read_excel("LP14/LP14_RO.xls") %>%
+df_all1 <- read_excel("LP12_RO.xls") %>% mutate(source = "LP12")
+df_all2 <- read_excel("LP13_RO.xls") %>% mutate(source = "LP13")
+df_all3 <- read_excel("LP14_RO.xls") %>%
   mutate(source = case_when(
     str_detect(...1, "^FL[123]") ~ "LP14A",
     str_detect(...1, "^FL[456]") ~ "LP14B",
@@ -278,5 +280,3 @@ for (this_lineage in lineages) {
     height = 4
   )
 }
-
-
