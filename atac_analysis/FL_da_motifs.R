@@ -81,14 +81,14 @@ write.csv(neg_df, paste0(csv_path_ch, '/vs_prim/FL_perclust_dn.csv'), row.names 
 df_list <- list(pos_df, neg_df)
 names(df_list) = c('up in FL clusters vs C0', 'down in FL clusters vs C0')
 
-wb <- createWorkbook('table S2')
+wb <- createWorkbook('table S3')
 
 for(name in names(df_list)){
   
   addWorksheet(wb, sheetName = name)
   writeData(wb, sheet = name, x = df_list[[name]], keepNA = F)
 }
-saveWorkbook(wb, file = paste0(csv_path, 'sup/tableS2.xlsx'), overwrite = TRUE)
+saveWorkbook(wb, file = paste0(csv_path, 'sup/tableS3.xlsx'), overwrite = TRUE)
 
 # module scores for upregulated motifs
 DefaultAssay(FL) <- 'cisbpchromvar'
