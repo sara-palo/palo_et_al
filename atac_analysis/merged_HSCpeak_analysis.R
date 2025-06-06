@@ -38,12 +38,6 @@ dn_genes <- unique(dn_feat[dn_feat$distance < 2000, 'gene_name'])
 
 print(table(up_genes %in% dn_genes))
 
-isc <- intersect(up_genes, dn_genes)
-
-# remove genes present in both lists
-up_genes <- up_genes[! up_genes %in% isc]
-dn_genes <- dn_genes[! dn_genes %in% isc]
-
 res1 <- prep_data('human', up_genes)
 res2 <- prep_data('human', dn_genes)
 

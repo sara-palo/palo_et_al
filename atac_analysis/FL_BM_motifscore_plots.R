@@ -146,59 +146,6 @@ write.csv(data.frame('PC1_pos' = names(PC1_pos), 'PC1_pos_vals' = unname(PC1_pos
                      'PC2_pos' = names(PC2_pos), 'PC2_pos_vals' = unname(PC2_pos), 'PC2_neg' = names(PC2_neg), 'PC2_neg_vals' = unname(PC2_neg)), 
           paste0(sup_table_path, '/BMmotifs_PC_components.csv'))
 
-# PCA for selected clusters
-clusters_oi <- c('HSC', 'Ly-II', 'GMP-II', 'MEP-II', 'Ery-II')
-
-FLsubs <- subset(FL, pred.id.BM %in% clusters_oi)
-BMsubs <- subset(BM, BM_annot %in% clusters_oi)
-
-FLvars <- apply(FLsubs[['cisbpchromvar']]@data, 1, var)
-hist(FLvars, breaks = 500)
-hist(FLvars, breaks = 1000, xlim = c(0,3))
-table(FLvars > 1.5)
-
-BMvars <- apply(BMsubs[['cisbpchromvar']]@data, 1, var)
-hist(BMvars, breaks = 500)
-hist(BMvars, breaks = 1000, xlim = c(0,3))
-table(BMvars > 1.6)
-
-FLvars_ord <- FLvars[order(FLvars, decreasing = T)]
-BMvars_ord <- BMvars[order(BMvars, decreasing = T)]
-
-FLsubs <- ScaleData(FLsubs, assay = 'cisbpchromvar', features = names(FLvars_ord[1:150]))
-BMsubs <- ScaleData(BMsubs, assay = 'cisbpchromvar', features = names(BMvars_ord[1:150]))
-
-FLsubsmotifs <- FLsubs[['cisbpchromvar']]@scale.data
-dim(FLsubsmotifs)
-FLsubsmotifs <- data.frame(t(FLsubsmotifs))
-FLsubsmotifs$cluster <- FLsubs$pred.id.BM
-FLsubsmotifs$cluster <- factor(FLsubsmotifs$cluster)
-
-pcaFLsubs <- prcomp(FLsubsmotifs[, 1:(dim(FLsubsmotifs)[2]-1)])
-
-autoplot(object = pcaFLsubs, data = FLsubsmotifs, color = 'cluster', size = 1.1) +
-  scale_color_manual(values = annot_colors$cluster_cols[clusters_oi]) + 
-  theme_bw()
-ggsave(paste0(fig_path, 'fig2/FL_top150motifs_pca.pdf'))
-
-BMsubsmotifs <- BMsubs[['cisbpchromvar']]@scale.data
-dim(BMsubsmotifs)
-BMsubsmotifs <- data.frame(t(BMsubsmotifs))
-BMsubsmotifs$cluster <- BMsubs$BM_annot
-BMsubsmotifs$cluster <- factor(BMsubsmotifs$cluster)
-
-pcaBMsubs <- prcomp(BMsubsmotifs[, 1:(dim(BMsubsmotifs)[2]-1)])
-
-trng <- rep('triangle', length(clusters_oi))
-names(trng) <- clusters_oi
-
-autoplot(object = pcaBMsubs, data = BMsubsmotifs, color = 'cluster', shape = 'cluster', size = 1.1) +
-  scale_color_manual(values = annot_colors$cluster_cols[clusters_oi]) +
-  scale_shape_manual(values = trng) +
-  theme_bw()
-ggsave(paste0(fig_path, 'fig2/BM_top150motifs_pca.pdf'))
-
-
 # PCA on all cells
 FLvars <- apply(FL[['cisbpchromvar']]@data, 1, var)
 hist(FLvars, breaks = 500)
