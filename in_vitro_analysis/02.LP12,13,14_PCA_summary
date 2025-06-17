@@ -3,8 +3,9 @@ library(readxl)
 library(ggplot2)
 library(viridis)
 library(patchwork)
+
 set.seed(123)
-setwd("")##set work dicrectory
+setwd("C:/Users/keiki/OneDrive/デスクトップ/Sara_project/0617")##set work dicrectory
 
 lineage_colors <- c(
   "B" = "#785EF0",
@@ -20,62 +21,25 @@ origin_colors <- c(
 )
 
 # ========= 1. Read and preprocess RO files =========
-      read_and_format_ro <- function(filepath, source_label) {
-        df <- read_excel(filepath) %>%
-          mutate(source = source_label,
-                   Sample = ...1, 
-                   Group = case_when(
-                     grepl("^BM", Sample) ~ "BM",
-                     grepl("^CB", Sample) ~ "CB",
-                     grepl("^FL", Sample) ~ "FL")
-                 ) %>%
-          as.data.frame()
-        rownames(df) <- paste(df$source, df$...1, sep = "_")
-        df <- df[, !colnames(df) %in% "source"]
-        df <- df[, -1]  # remove ...1
-        return(df)
-      }
-      
-            LP12_RO <- read_and_format_ro("LP12_RO.xls", "LP12")
-            LP13_RO <- read_and_format_ro("LP13_RO.xls", "LP13")
+# filter FL and BM sample
+df_combined <- df_all %>%
+  filter(Group %in% c("FL", "BM"))
 
-      read_and_format_ro_lp14 <- function(filepath) {
-        df <- read_excel(filepath) %>%
-          mutate(
-            Sample = ...1,
-            source = case_when(
-              grepl("^FL[1-3]", Sample) ~ "LP14A",
-              grepl("^FL[4-6]", Sample) ~ "LP14B",
-              TRUE ~ "LP14"  #
-            ))  %>%
-          as.data.frame()
-        
-        rownames(df) <- paste(df$source, df$Sample, sep = "_")
-        # ✅ rownames(df)  to Group
-        df$Group <- case_when(
-          grepl("_(BM)", rownames(df)) ~ "BM",
-          grepl("_(CB)", rownames(df)) ~ "CB",
-          grepl("_(FL)|LP14A_|LP14B_", rownames(df)) ~ "FL",
-          TRUE ~ NA_character_
-        )
-        df <- df[, !colnames(df) %in% c("source","...1")]  # delete unnecessary
-        return(df)
-      }
-            LP14_RO <- read_and_format_ro_lp14("LP14_RO.xls")
+# 2. make unique rownames
+df_combined <- df_combined %>%
+  mutate(rowname = paste(source, Sample, sep = "_")) %>%
+  column_to_rownames("rowname")
 
+# 3. delete unneccessary columns
+remove_cols <- c("B", "NK", "CD71", "Sample", "source", "PositivityCombo", 
+                 "Group_source", "n_positive", "PositivityCategory",
+                 "B_pos", "NK_pos", "Mono_pos", "RBC_pos", "Mk_pos","...1","Group")
 
-
-
-
-
-combined <- rbind(LP12_RO, LP13_RO,LP14_RO) %>%
-  filter(!is.na(Group)) %>%
-  filter(Group %in% c("FL", "BM")) 
-
-
+# 4. clean up data frame
+keep_cols <- setdiff(colnames(df_combined), remove_cols)
+combined_for_pca <- df_combined[, keep_cols]
 
 # ========= 2. Remove B and NK columns for PCA, normalize by Alive =========
-combined_for_pca <- combined[, !colnames(combined) %in% c("B", "NK","Group","Sample")]
 alive_values <- combined_for_pca$Alive
 
 normalized <- combined_for_pca
@@ -99,9 +63,6 @@ pca_df$origin <- case_when(
 )
 pca_df <- pca_df %>% filter(!is.na(origin))
 
-
-
-
 pca_df$B_ratio   <- normalized[rownames(pca_df), "B(inclCD11b)"]
 pca_df$NK_ratio   <- normalized[rownames(pca_df), "NKp46+(inclCD11b)"]
 pca_df$Mono_ratio <- normalized[rownames(pca_df), "Mono"]
@@ -109,96 +70,122 @@ pca_df$RBC_ratio  <- normalized[rownames(pca_df), "RBC"]
 pca_df$Mk_ratio  <- normalized[rownames(pca_df), "Mk"]
 
 # ========= 5. Plot individual marker distributions in PCA =========
+# xlims <- range(pca_df$PC1, na.rm = TRUE) #-2.3 to 3.72
+# ylims <- range(pca_df$PC2, na.rm = TRUE) #-6.79 to 2.62
+ xlims <- c(-3,4)
+ ylims <- c(-7,3)
 
-p1 <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = B_ratio)) +
-  geom_point(size = 3, shape = 21, color = "black", stroke = 0.3) +
-  scale_fill_gradient(low = "white", high = lineage_colors["B"]) +
-  theme_classic() +
-  labs(title = "B cell ratio", fill = "B / Alive")
+              B_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = B_ratio)) +
+                geom_point(size = 3, shape = 21, color = "black", stroke = 0.3) +
+                scale_fill_gradient(low = "white", high = lineage_colors["B"]) +
+                theme_classic() +
+                coord_fixed() +   xlim(xlims) + ylim(ylims) +
+                labs(title = "B cell ratio", fill = "B / Alive")
+              
+              NK_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = NK_ratio)) +
+                geom_point(size = 3, shape = 21, color = "black", stroke = 0.3) +
+                scale_fill_gradient(low = "white", high = lineage_colors["NK"]) +
+                theme_classic() +
+                coord_fixed() +   xlim(xlims) + ylim(ylims) +
+                labs(title = "NK cell ratio", fill = "NK / Alive")
+              
+              Mono_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = Mono_ratio)) +
+                geom_point(size = 3, shape = 21, color = "black", stroke = 0.3) +
+                scale_fill_gradient(low = "white", high = lineage_colors["Mono"]) +
+                theme_classic() +
+                coord_fixed() +   xlim(xlims) + ylim(ylims) +
+                labs(title = "Mono cell ratio", fill = "Mono / Alive")
+              
+              Ery_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = RBC_ratio)) +
+                geom_point(size = 3, shape = 21, color = "black", stroke = 0.3) +
+                scale_fill_gradient(low = "white", high = lineage_colors["RBC"]) +
+                theme_classic() +
+                coord_fixed() +   xlim(xlims) + ylim(ylims) +
+                labs(title = "Ery cell ratio", fill = "Ery / Alive")
+              
+              Mk_plot <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = Mk_ratio)) +
+                geom_point(size = 3, shape = 21, color = "black", stroke = 0.3) +
+                scale_fill_gradient(low = "white", high = lineage_colors["Mk"]) +
+                theme_classic() +
+                coord_fixed() +   xlim(xlims) + ylim(ylims) +
+                labs(title = "Mgk cell ratio", fill = "Mk / Alive")
 
-p4 <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = NK_ratio)) +
-  geom_point(size = 3, shape = 21, color = "black", stroke = 0.3) +
-  scale_fill_gradient(low = "white", high = lineage_colors["NK"]) +
-  theme_classic() +
-  labs(title = "NK cell ratio", fill = "NK / Alive")
 
-p3 <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = Mono_ratio)) +
-  geom_point(size = 3, shape = 21, color = "black", stroke = 0.3) +
-  scale_fill_gradient(low = "white", high = lineage_colors["Mono"]) +
-  theme_classic() +
-  labs(title = "Mono cell ratio", fill = "Mono / Alive")
+pdf("PCA_marker_ratios_0616.pdf", width = 10, height = 6)
+print(B_plot + NK_plot + Mono_plot + Ery_plot + Mk_plot)
+dev.off()
 
-p2 <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = RBC_ratio)) +
-  geom_point(size = 3, shape = 21, color = "black", stroke = 0.3) +
-  scale_fill_gradient(low = "white", high = lineage_colors["RBC"]) +
-  theme_classic() +
-  labs(title = "Ery cell ratio", fill = "Ery / Alive")
+              p8_FL <- ggplot(pca_df %>% filter(origin == "FL"), aes(x = PC1, y = PC2)) +
+                stat_density_2d(geom = "polygon", fill = '#1c6494', alpha = 0.2, color = NA,bins = 7) +
+                geom_point( size = 4,shape=21, color = "black",fill='#1c6494', stroke = 0.4) +
+                xlim(xlims) + ylim(ylims) +
+                theme_classic() +
+                labs(title = "FL", x = "PC1", y = "PC2")
+              
+              
+              p8_BM <- ggplot(pca_df %>% filter(origin == "BM"), aes(x = PC1, y = PC2)) +
+                stat_density_2d(geom = "polygon", fill = '#1b4b1f', alpha = 0.2, color = NA,bins = 7) +
+                geom_point(shape=21, fill = '#1b4b1f', size = 4, color ='black', stroke = 0.4) +
+                xlim(xlims) + ylim(ylims) +
+                theme_classic() +
+                labs(title = "BM", x = "PC1", y = "PC2")
 
-p5 <- ggplot(pca_df, aes(x = PC1, y = PC2, fill = Mk_ratio)) +
-  geom_point(size = 3, shape = 21, color = "black", stroke = 0.3) +
-  scale_fill_gradient(low = "white", high = lineage_colors["Mk"]) +
-  theme_classic() +
-  labs(title = "Mgk cell ratio", fill = "Mk / Alive")
+pdf("PCA_marker_contour_plot_by_organ_0616.pdf", width = 7, height = 4)
+print(p8_FL+p8_BM)
+dev.off()
 
 
-p6 <- ggplot(pca_df, aes(x = PC1, y = PC2)) +
-  geom_point(aes(shape = origin, fill = origin), size = 4, color = "black", stroke = 0.4, alpha = 0.5) +
-  scale_shape_manual(values = c("BM" = 25, "FL" = 21)) +
-  scale_fill_manual(values = origin_colors) +
-  theme_classic(base_size = 14) +
-  theme(
-    legend.position = "right",
-    axis.text = element_text(color = "black"),
-    axis.line = element_line(color = "black")
-  ) +
-  labs(
-    title = "PCA by origin (with shape)",
-    x = "PC1", y = "PC2",
-    shape = "Origin",
-    fill = "Origin"
+# ========= 6. bi plot for B and mono=========
+
+combined_clean <- df_flbm[, c("B(inclCD11b)", "Mono", "Group")] %>%
+  mutate(
+    `B(inclCD11b)` = ifelse(`B(inclCD11b)` == 0, 0.5, `B(inclCD11b)`),
+    Mono = ifelse(Mono == 0, 0.5, Mono)
   )
 
-
-print(p1 + p2 + p3 + p4 + p5 + p6)
-
-
-
-p7 <- ggplot(pca_df, aes(x = PC1, y = PC2)) +
-  stat_density_2d(aes(fill = origin), geom = "polygon", alpha = 0.1, color = NA) +
-  geom_point(aes(color = origin), size = 3, alpha = 0.6) +
+xlim_vals <- c(0.04, 100000)
+ylim_vals <- c(0.04, 100000)
+p <-ggplot(combined_clean, aes(x = `B(inclCD11b)`, y = Mono)) +
+  stat_density_2d(
+    aes(fill = Group, alpha = after_stat(level)),
+    geom = "polygon", color = NA,
+    contour = TRUE,
+    bins =10,
+    xlim = xlim_vals,
+    ylim = ylim_vals
+  ) +
+  geom_point(
+    aes(color = Group),  
+    shape = 21,         
+    fill = "#FFFFFF80",    
+    size = 4,
+    stroke = 2
+  ) +
   scale_color_manual(values = origin_colors) +
-  scale_fill_manual(values = origin_colors) +
+  theme_minimal()+
+  annotate("rect", xmin = 10, xmax = 50, ymin = -Inf, ymax = Inf,
+           fill = "gray80", alpha = 0.5) +
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = 10, ymax = 50,
+           fill = "gray80", alpha = 0.5) +
+  geom_vline(xintercept = 50, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = 50, linetype = "dashed", color = "black") +
+  scale_x_log10(limits = xlim_vals) +
+  scale_y_log10(limits = ylim_vals) +
+  coord_fixed()+
   theme_classic(base_size = 14) +
+  labs(
+    title = "Filled contour per group (adjusted bins, fixed edges)",
+    x = "B (log10), 0 was converted to 0.5", y = "Mono (log10), 0 was converted to 0.5",
+    fill = "Group", color = "Group"
+  ) +
   theme(
     legend.position = "right",
     axis.text = element_text(color = "black"),
     axis.line = element_line(color = "black")
-  ) +
-  labs(
-    title = "PCA by origin with filled density contours",
-    x = "PC1", y = "PC2",
-    color = "Origin",
-    fill = "Origin"
-  )
+  )+  
+  guides(alpha = "none") + 
+  scale_fill_manual(values = origin_colors) 
 
-xlims <- range(pca_df$PC1, na.rm = TRUE)
-ylims <- range(pca_df$PC2, na.rm = TRUE)
-
-  p8_FL <- ggplot(pca_df %>% filter(origin == "FL"), aes(x = PC1, y = PC2)) +
-    stat_density_2d(geom = "polygon", fill = 'lightblue', alpha = 0.7, color = NA,bins = 5) +
-    geom_point(shape = 21, fill = origin_colors["FL"], color = "black", stroke = 0.4, size = 1.5, alpha = 0.7) +
-    xlim(xlims) + ylim(ylims) +
-    theme_classic() +
-    labs(title = "FL", x = "PC1", y = "PC2")
-  
-
-  p8_BM <- ggplot(pca_df %>% filter(origin == "BM"), aes(x = PC1, y = PC2)) +
-    stat_density_2d(geom = "polygon", fill = 'lightgreen', alpha = 0.7, color = NA,bins = 50) +
-    geom_point(shape = 21, fill = origin_colors["BM"], color = "black", stroke = 0.4, size = 1.5, alpha = 0.7) +
-    xlim(xlims) + ylim(ylims) +
-    theme_classic() +
-    labs(title = "BM", x = "PC1", y = "PC2")
-  
-  pdf("PCA_marker_ratios_by_origin3.pdf", width = 10, height = 8)
-  print(p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8_FL+p8_BM)
-  dev.off()
+print(p)
+ggsave("B_vs_Mono_contour_fixed_incl0count_v2.pdf", plot = p, width = 6, height = 6, dpi = 300)
+sessionInfo()
