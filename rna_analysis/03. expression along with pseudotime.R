@@ -67,9 +67,8 @@ tf_dotplot_l2ps <- function(data = NULL,
 
 # === Generate and save plot ===
 plot_ly <- tf_dotplot_l2ps(data = ly_data_fl, features = c("EBF1", "HOXB7", "SPIB",  "TCF3","PAX5"))
-print(plot_ly)
 
-pdf(file="250311_Ly2_trajectory_4TFs.pdf", height = 4, width = 8)
+pdf(file="250616_Ly2_trajectory_4TFs.pdf", height = 4, width = 8)
 print(plot_ly)
 dev.off()
 
@@ -126,6 +125,6 @@ tf_dotplot_gmp_ps <- function(data = NULL,
 plot_gmp <- tf_dotplot_gmp_ps(data = gmp_data_fl, 
                               features = c("EBF1", "HOXB7", "SPIB", "CEBPA"))
 
-pdf(file="250311_gmp_trajectory_4TFs.pdf", height = 4, width = 8)
+pdf(file="250616_gmp_trajectory_4TFs.pdf", height = 4, width = 8)
 print(plot_gmp)
 dev.off()
