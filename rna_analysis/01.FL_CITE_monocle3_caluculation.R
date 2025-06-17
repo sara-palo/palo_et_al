@@ -9,7 +9,7 @@ library(ggplot2)
 set.seed(123)
 
 # Set working directory and load Seurat object
-setwd("C:/Users/keiki/Desktop/Sara_project")
+setwd("C:/Users/keiki/OneDrive/デスクトップ/Sara_project")
 FL <- readRDS("FL_CITE.rds")
 
 # Set assay and cluster identity
@@ -101,3 +101,4 @@ dev.off()
 
 # Save Seurat object with pseudotime
 # saveRDS(FL, file = "FL_CITE_trajectory.rds")
+# identical(FL, FL_CITE_trajectory)
