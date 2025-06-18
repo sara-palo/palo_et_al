@@ -155,8 +155,7 @@ p <-ggplot(combined_clean, aes(x = `B(inclCD11b)`, y = Mono)) +
     ylim = ylim_vals
   ) +
   geom_point(
-    aes(color = Group),  
-    shape = 21,         
+    aes(color = Group),   
     fill = "#FFFFFF80",    
     size = 4,
     stroke = 2
