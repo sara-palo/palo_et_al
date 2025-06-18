@@ -316,5 +316,5 @@ p_rbc  <- plot_lineage_bar("RBC", "red")
 
 # Save to PDF
 pdf("LP_positiveratio_50_FL_BM with abs number.pdf", width = 12, height = 6)
-wrap_plots(p_b, p_mono, p_rbc, p_mk,  p_nk, ncol = 3)
+wrap_plots(p_b, p_nk, p_mono, p_rbc, p_mk, ncol = 3)
 dev.off()
