@@ -6,7 +6,12 @@ library(jsonlite)
 library(plotly)   
 
 set.seed(123)
-setwd("C:/Users/keiki/Desktop/Sara_project")
+
+PRJ <- "C:/Users/keiki/OneDrive/デスクトップ/Sara_project"
+setwd(PRJ)
+out_dir <- sprintf("output_%s", format(Sys.Date(), "%Y%m%d"))
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+out_dir
 
 # Define reference files
 DATAFILES <- list(
@@ -102,21 +107,21 @@ plot_cellradar <- function(res_list = NULL, colors = NULL, names = NULL, opac = 
 }
 
 # Load Seurat object and subset HSCs
-seurat <- readRDS("FL_BM.combined0426.rds")
+seurat <- readRDS("rds/FL_BM.combined0426.rds")
 hsc <- subset(seurat, combined_clusts %in% c("FL_HSC", "BM_HSC-I", "BM_HSC-II", "BM_HSC-III"))
 Idents(hsc) <- "dataset"
 
 # FL vs BM differential expression
 FL_dif <- FindMarkers(hsc, ident.1 = "FL", ident.2 = "BM", only.pos = TRUE) %>%
   filter(p_val_adj < 0.05 & avg_log2FC > 1)
-write.csv(FL_dif, "FL_dif.csv")
+write.csv(FL_dif, paste0(out_dir,"/scRNA_DEGs_RNA_FL_HSC_cellrader.csv"))
 res_fl <- prep_data(dataset = 'human', genes = rownames(FL_dif))
 fig_fl <- plot_cellradar(list(res_fl), colors = c('#1c6494'), names = c("FL"))
 
 # BM vs FL differential expression
 BM_dif <- FindMarkers(hsc, ident.1 = "BM", ident.2 = "FL", only.pos = TRUE) %>%
   filter(p_val_adj < 0.05 & avg_log2FC > 1)
-write.csv(BM_dif, "BM_dif.csv")
+write.csv(BM_dif, paste0(out_dir,"/scRNA_DEGs_RNA_BM_HSC_cellrader.csv"))
 res_bm <- prep_data(dataset = 'human', genes = rownames(BM_dif))
 fig_bm <- plot_cellradar(list(res_bm), colors = c('#1b4b1f'), names = c("BM"))
 
@@ -133,4 +138,5 @@ missinggenes <- data.frame(
   BM = str_flatten(res_bm$nonexisting_genes, collapse = ',')
 )
 
-fig_combined
+write.csv(missinggenes, paste0(out_dir,"/scRNA_missing_genes_FL_BM_HSC_cellrader.csv"), row.names = FALSE)
+fig_combined # export as pdf 
