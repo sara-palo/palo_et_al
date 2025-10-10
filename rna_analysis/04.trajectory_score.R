@@ -4,11 +4,16 @@ library(UCell)
 library(ggplot2)
 library(dplyr)
 library(patchwork)
-
 set.seed(123)
 
+PRJ <- "C:/Users/keiki/OneDrive/デスクトップ/Sara_project"
+setwd(PRJ)
+out_dir <- sprintf("output_%s", format(Sys.Date(), "%Y%m%d"))
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+out_dir
+
 # Load data
-FL <- readRDS(file="C:/Users/keiki/OneDrive/デスクトップ/Sara_project/FL_CITE_trajectory.rds")
+FL <- readRDS(file="rds/FL_CITE_trajectory_gmp2.rds")
 Idents(FL) <- "clust.names"
 
 # Identify DEGs between Ly-II vs HSC, and GMP vs HSC
@@ -31,15 +36,20 @@ expr_data <- FL@assays$RNA@counts
 FL <- SetIdent(FL, value = factor(Idents(FL), levels = c("HSC", "Ly-II", "GMP")))
 
 # Plot violin plots
-pdf("violinplot_FLsubset_GMPscore_1.0.pdf")
+pdf(paste0(out_dir,"/scRNA_violinplot_FLsubset_GMPscore_1.0.pdf"))
   VlnPlot(FL, features = "gmp_in_FL_UCell", idents = c("HSC", "Ly-II", "GMP"),
-          cols = c('#E9CB53', "#793885", '#56ace5'), y.max = 1, pt.size = 1)
+          cols = c('#E9CB53', "#793885", '#56ace5'), y.max = 1, pt.size = 1)+
+    labs(title = "myeloid score in FL")
+  
 dev.off()
 
-pdf("violinplot_FLsubset_ly2score_1.0.pdf")
+pdf(paste0(out_dir,"/scRNA_violinplot_FLsubset_ly2score_1.0.pdf"))
   VlnPlot(FL, features = "ly_in_FL_UCell", idents = c("HSC", "Ly-II", "GMP"),
-          cols = c('#E9CB53', "#793885", '#56ace5'), y.max = 1, pt.size = 1)
+          cols = c('#E9CB53', "#793885", '#56ace5'), y.max = 1, pt.size = 1)+
+    labs(title = "Lymphoid score in FL")
 dev.off()
+
+
 
 # Pseudotime scoring along Ly2 and GMP trajectories
 DefaultAssay(FL) <- "RNA"
@@ -51,21 +61,21 @@ print(unique(FL$gmp_ps_cut)) #15.8-17.6 for gmp_ps
 
 
 # Ly2 trajectory
-      ly_df_lytrajectory <- FetchData(FL, vars = c("l2_ps", "ly_in_FL_UCell")) %>%
-        mutate(group = "FL: Ly2", UCell_Score = ly_in_FL_UCell) %>%
-        select(-ly_in_FL_UCell)
+      ly_df_lytrajectory <- FetchData(FL, vars = c("l2_ps", "ly_in_FL_UCell"))
+        ly_df_lytrajectory <- mutate(ly_df_lytrajectory,group = "FL: Ly2", UCell_Score = ly_in_FL_UCell)
+        ly_df_lytrajectory <- select(ly_df_lytrajectory,-ly_in_FL_UCell)
       
-      gmp_df_lytrajectory <- FetchData(FL, vars = c("l2_ps", "gmp_in_FL_UCell")) %>%
-        mutate(group = "FL: GMP", UCell_Score = gmp_in_FL_UCell) %>%
-        select(-gmp_in_FL_UCell)
+      gmp_df_lytrajectory <- FetchData(FL, vars = c("l2_ps", "gmp_in_FL_UCell"))
+        gmp_df_lytrajectory <- mutate(gmp_df_lytrajectory,group = "FL: GMP", UCell_Score = gmp_in_FL_UCell)
+        gmp_df_lytrajectory <-select(      gmp_df_lytrajectory ,-gmp_in_FL_UCell)
       
-      combined_lytrajectory <- bind_rows(ly_df_lytrajectory, gmp_df_lytrajectory)
+      combined_lytrajectory <- bind_rows(ly_df_lytrajectory, gmp_df_lytrajectory)%>% na.omit()
       
-            pdf("Ly2_GMP_scoring_Ly2_Trajectory_highlight_band.pdf", height = 4, width = 8)
+            pdf(paste0(out_dir,"/scRNA_lineage_scoring_Ly2_Trajectory_highlight_band.pdf"), height = 4, width = 8)
             ggplot(combined_lytrajectory, aes(x = l2_ps, y = UCell_Score, color = group)) +
               annotate("rect", xmin = 20.5, xmax = 22.8, ymin = -Inf, ymax = Inf, fill = "gray", alpha = 0.5) +
               geom_point(alpha = 0.3, stroke = 0) +
-              geom_smooth(method = "gam", formula = y ~ s(x), se = TRUE, size = 1) +
+              geom_smooth(method = "gam", formula = y ~ s(x), se = TRUE, linewidth = 1) +
               scale_color_manual(values = c("FL: Ly2" = '#793885', "FL: GMP" = "#56ace5")) +
               theme_classic() +
               labs(title = "Ly2/GMP scoring in Ly2 Trajectories (last 10% highlighted)",
@@ -73,17 +83,16 @@ print(unique(FL$gmp_ps_cut)) #15.8-17.6 for gmp_ps
             dev.off()
 
 # GMP trajectory
-      ly_df_gmtrajectory <- FetchData(FL, vars = c("gmp_ps", "ly_in_FL_UCell")) %>%
-        mutate(group = "FL: Ly2", UCell_Score = ly_in_FL_UCell) %>%
-        select(-ly_in_FL_UCell)
+      ly_df_gmtrajectory <- FetchData(FL, vars = c("gmp_ps", "ly_in_FL_UCell"))
+        ly_df_gmtrajectory <- mutate(ly_df_gmtrajectory, group = "FL: Ly2", UCell_Score = ly_in_FL_UCell)
+        ly_df_gmtrajectory <- select(ly_df_gmtrajectory,-ly_in_FL_UCell)
       
-      gmp_df_gmtrajectory <- FetchData(FL, vars = c("gmp_ps", "gmp_in_FL_UCell")) %>%
-        mutate(group = "FL: GMP", UCell_Score = gmp_in_FL_UCell) %>%
-        select(-gmp_in_FL_UCell)
-      
-      combined_gmtrajectory <- bind_rows(ly_df_gmtrajectory, gmp_df_gmtrajectory)
-
-            pdf("Ly2_GMP_scoring_GMP_Trajectory_highlight_band.pdf", height = 4, width = 8)
+      gmp_df_gmtrajectory <- FetchData(FL, vars = c("gmp_ps", "gmp_in_FL_UCell"))
+        gmp_df_gmtrajectory <- mutate(gmp_df_gmtrajectory,group = "FL: GMP", UCell_Score = gmp_in_FL_UCell)
+        gmp_df_gmtrajectory <-  select(gmp_df_gmtrajectory,-gmp_in_FL_UCell)
+        
+      combined_gmtrajectory <- bind_rows(ly_df_gmtrajectory, gmp_df_gmtrajectory)%>% na.omit()
+            pdf(paste0(out_dir,"/scRNA_lineage_scoring_GMP_Trajectory_highlight_band.pdf"), height = 4, width = 8)
             ggplot(combined_gmtrajectory, aes(x = gmp_ps, y = UCell_Score, color = group)) +
               annotate("rect", xmin = 15.8, xmax = 17.6, ymin = -Inf, ymax = Inf, fill = "gray", alpha = 0.5) +
               geom_point(alpha = 0.3, stroke = 0) +
@@ -117,14 +126,14 @@ stats_df <- data.frame(
   wilcox_pval = wc$p.value
 )
 stats_df
-write.csv(stats_df, file='pseudotime_modscores_FL_Ly_my_stat.csv')
+write.csv(stats_df, file=paste0(out_dir,'/pseudotime_modscores_FL_Ly_my_stat.csv'))
 
 # Boxplot
 l2_df$group <- "Lymphoid-trajectory (Ly)"
 gmp_df$group <- "Myeloid-trajectory (GMP)"
 plot_df <- rbind(l2_df[, c("diff", "group")], gmp_df[, c("diff", "group")])
 
-pdf("difference_boxplot_lineage_specificity.pdf", width = 4, height = 8)
+pdf(paste0(out_dir,"/scRNA_difference_boxplot_lineage_specificity.pdf"), width = 4, height = 8)
 ggplot(plot_df, aes(x = group, y = diff, fill = group)) +
   geom_boxplot(outlier.shape = NA, width = 0.6, alpha = 0.7) +
   geom_jitter(width = 0.2, alpha = 0.4, size = 1.5) +
@@ -133,6 +142,101 @@ ggplot(plot_df, aes(x = group, y = diff, fill = group)) +
   theme_classic(base_size = 14) +
   theme(legend.position = "none")
 dev.off()
-library(monocle3)
-sessionInfo()
+
+
+
+
+####GMP2
+# Pseudotime scoring along Ly2 and GMP trajectories
+DefaultAssay(FL) <- "RNA"
+# Compare differences in last 10% bins
+FL$l2_ps_cut <- cut(FL$l2_ps, breaks = 10)
+print(unique(FL$l2_ps_cut)) #20.5-22.8 for l2_ps
+FL$gmp2_ps_cut <- cut(FL$gmp2_ps, breaks = 10)
+print(unique(FL$gmp2_ps_cut)) #12.4-14 for gmp2_ps
+
+
+# Ly2 trajectory
+ly_df_lytrajectory <- FetchData(FL, vars = c("l2_ps", "ly_in_FL_UCell"))
+ly_df_lytrajectory <- mutate(ly_df_lytrajectory,group = "FL: Ly2", UCell_Score = ly_in_FL_UCell)
+ly_df_lytrajectory <- select(ly_df_lytrajectory,-ly_in_FL_UCell)
+
+gmp2_df_lytrajectory <- FetchData(FL, vars = c("l2_ps", "gmp_in_FL_UCell"))
+gmp2_df_lytrajectory <- mutate(gmp2_df_lytrajectory,group = "FL: GMP", UCell_Score = gmp_in_FL_UCell)
+gmp2_df_lytrajectory <-select(      gmp2_df_lytrajectory ,-gmp_in_FL_UCell)
+
+combined_lytrajectory <- bind_rows(ly_df_lytrajectory, gmp2_df_lytrajectory)%>% na.omit()
+
+pdf(paste0(out_dir,"/(gmp2)scRNA_lineage_scoring_Ly2_Trajectory_highlight_band.pdf"), height = 4, width = 8)
+ggplot(combined_lytrajectory, aes(x = l2_ps, y = UCell_Score, color = group)) +
+  annotate("rect", xmin = 20.5, xmax = 22.8, ymin = -Inf, ymax = Inf, fill = "gray", alpha = 0.5) +
+  geom_point(alpha = 0.3, stroke = 0) +
+  geom_smooth(method = "gam", formula = y ~ s(x), se = TRUE, linewidth = 1) +
+  scale_color_manual(values = c("FL: Ly2" = '#793885', "FL: GMP" = "#56ace5")) +
+  theme_classic() +
+  labs(title = "Ly2/GMP scoring in Ly2 Trajectories (last 10% highlighted)",
+       x = "l2_ps", y = "UCell Score")
+dev.off()
+
+# gmp2 trajectory
+ly_df_gmtrajectory <- FetchData(FL, vars = c("gmp2_ps", "ly_in_FL_UCell"))
+ly_df_gmtrajectory <- mutate(ly_df_gmtrajectory, group = "FL: Ly2", UCell_Score = ly_in_FL_UCell)
+ly_df_gmtrajectory <- select(ly_df_gmtrajectory,-ly_in_FL_UCell)
+
+gmp2_df_gmtrajectory <- FetchData(FL, vars = c("gmp2_ps", "gmp_in_FL_UCell"))
+gmp2_df_gmtrajectory <- mutate(gmp2_df_gmtrajectory,group = "FL: GMP", UCell_Score = gmp_in_FL_UCell)
+gmp2_df_gmtrajectory <-  select(gmp2_df_gmtrajectory,-gmp_in_FL_UCell)
+
+combined_gmtrajectory <- bind_rows(ly_df_gmtrajectory, gmp2_df_gmtrajectory)%>% na.omit()
+pdf(paste0(out_dir,"/(gmp2)scRNA_lineage_scoring_gmp2_Trajectory_highlight_band.pdf"), height = 4, width = 8)
+ggplot(combined_gmtrajectory, aes(x = gmp2_ps, y = UCell_Score, color = group)) +
+  annotate("rect", xmin = 14, xmax = 15.5, ymin = -Inf, ymax = Inf, fill = "gray", alpha = 0.5) +
+  geom_point(alpha = 0.3, stroke = 0) +
+  geom_smooth(method = "gam", formula = y ~ s(x), se = TRUE, size = 1) +
+  scale_color_manual(values = c("FL: Ly2" = '#793885', "FL: GMP" = "#56ace5")) +
+  theme_classic() +
+  labs(title = "Ly2/gmp2 scoring in gmp2 Trajectories (last 10% highlighted)",
+       x = "gmp2_ps", y = "UCell Score")
+dev.off()
+
+
+
+l2_df <- FL@meta.data[FL$l2_ps_cut == levels(FL$l2_ps_cut)[10], c("ly_in_FL_UCell", "gmp_in_FL_UCell","l2_ps")]
+l2_df$diff <- l2_df$ly_in_FL_UCell - l2_df$gmp_in_FL_UCell
+l2_df <- l2_df[!is.na(l2_df$diff), ]
+
+gmp2_df <- FL@meta.data[FL$gmp2_ps_cut == levels(FL$gmp2_ps_cut)[10], c("ly_in_FL_UCell", "gmp_in_FL_UCell","gmp2_ps")]
+gmp2_df$diff <- gmp2_df$gmp_in_FL_UCell - gmp2_df$ly_in_FL_UCell
+gmp2_df <- gmp2_df[!is.na(gmp2_df$diff), ]
+
+
+# Wilcoxon test
+wc <- wilcox.test(l2_df$diff, gmp2_df$diff)
+
+# Summary stats
+stats_df <- data.frame(
+  ly_ps_mean_diff = mean(l2_df$diff),
+  my_ps_mean_diff = mean(gmp2_df$diff),
+  ly_ps_median_diff = median(l2_df$diff),
+  my_ps_median_diff = median(gmp2_df$diff),
+  wilcox_pval = wc$p.value
+)
+stats_df
+write.csv(stats_df, file=paste0(out_dir,'/(gmp2)pseudotime_modscores_FL_Ly_my_stat.csv'))
+
+# Boxplot
+l2_df$group <- "Lymphoid-trajectory (Ly)"
+gmp2_df$group <- "Myeloid-trajectory (gmp2)"
+plot_df <- rbind(l2_df[, c("diff", "group")], gmp2_df[, c("diff", "group")])
+
+pdf(paste0(out_dir,"/(gmp2)scRNA_difference_boxplot_lineage_specificity.pdf"), width = 4, height = 8)
+ggplot(plot_df, aes(x = group, y = diff, fill = group)) +
+  geom_boxplot(outlier.shape = NA, width = 0.6, alpha = 0.7) +
+  geom_jitter(width = 0.2, alpha = 0.4, size = 1.5) +
+  scale_fill_manual(values = c("Lymphoid-trajectory (Ly)" = "#793885", "Myeloid-trajectory (gmp2)" = "#56ace5")) +
+  labs(title = "Difference in UCell Scores", y = "Score difference (Ly - gmp2)", x = NULL) +
+  theme_classic(base_size = 14) +
+  theme(legend.position = "none")
+dev.off()
+
 
