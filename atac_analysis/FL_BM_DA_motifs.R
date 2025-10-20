@@ -102,6 +102,9 @@ orca(p = plot_cellradar(res_list = list(resgm1, resgm2), colors = unname(annot_c
 orca(p = plot_cellradar(res_list = list(resly2, resgm2), colors = unname(annot_colors$cluster_cols[c('Ly-II', 'GMP-II')]), names = c('Ly-II', 'GMP-II')),
      paste0(fig_path, 'fig4/FL_LyII_GMPII_cellradar.pdf'), more_args = '--disable-gpu')
 
+orca(p = plot_cellradar(res_list = list(resly1, resgm1), colors = unname(annot_colors$cluster_cols[c('Ly-I', 'GMP-I')]), names = c('Ly-I', 'GMP-I')),
+     paste0(fig_path, 'sup4/FL_LyI_GMP-I.pdf'), more_args = '--disable-gpu')
+
 orca(p = plot_cellradar(res_list = list(resly2, resgm2, reser2), colors = unname(annot_colors$cluster_cols[c('Ly-II', 'GMP-II', 'Ery-II')]), names = c('Ly-II', 'GMP-II', 'Ery-II')),
      paste0(fig_path, 'additional_plots/FL_LyII_GMPII_EryII.pdf'), more_args = '--disable-gpu')
 
@@ -115,6 +118,9 @@ write.table(missinggenes, paste0(sup_table_path, '/FL_annot_CR_missinggenes.txt'
 
 table(na.omit(pos_df$Ly.II) %in% resly2$nonexisting_genes)
 table(na.omit(pos_df$GMP.II) %in% resgm2$nonexisting_genes)
+
+table(na.omit(pos_df$Ly.I) %in% resly1$nonexisting_genes)
+table(na.omit(pos_df$GMP.I) %in% resgm1$nonexisting_genes)
 
 # do the same for adult BM
 da_pos_BM <- list()
@@ -174,9 +180,9 @@ df_da_both <- rbind(df_da, df_da_BM)
 df_da_both$x <- paste0(df_da_both$up_or_dn, ' in ', df_da_both$sample)
 df_da_both$x <- factor(df_da_both$x, levels = c('up in FL', 'down in FL', 'up in BM', 'down in BM'))
 
-ggplot(subset(df_da_both, cluster %in% c('Ly-II', 'GMP-II', 'Ery-II')), aes(x = cluster, y = count, fill = x, color = x)) + 
-  geom_col(data = subset(df_da_both, cluster %in% c('Ly-II', 'GMP-II', 'Ery-II') & sample == 'FL'), width = 0.35, just = 1.05, position = position_dodge2(width = 0.7)) +
-  geom_col(data = subset(df_da_both, cluster %in% c('Ly-II', 'GMP-II', 'Ery-II') & sample == 'BM'), width = 0.35, just = -0.05, position = position_dodge2(width = 0.7)) +
+ggplot(subset(df_da_both, cluster %in% c('Ly-II', 'GMP-II')), aes(x = cluster, y = count, fill = x, color = x)) + 
+  geom_col(data = subset(df_da_both, cluster %in% c('Ly-II', 'GMP-II') & sample == 'FL'), width = 0.35, just = 1.05, position = position_dodge2(width = 0.7)) +
+  geom_col(data = subset(df_da_both, cluster %in% c('Ly-II', 'GMP-II') & sample == 'BM'), width = 0.35, just = -0.05, position = position_dodge2(width = 0.7)) +
   scale_fill_manual('up or down', values = c("up in FL"= alpha('#840000', 1), "down in FL"= alpha('#081b80', 1), 
                                              "up in BM"= alpha('#840000', 0.4), "down in BM"= alpha('#081b80', 0.4))) + 
   scale_color_manual(values = annot_colors$da_cols2, guide = 'none') +
@@ -252,7 +258,7 @@ ggvenn(list('FL Ly-II' = pos_df$Ly.II, 'BM Ly-II' = pos_df_BM$Ly.II),
        show_percentage = FALSE, text_size = 14, fill_alpha = 0.7,  
        fill_color = unname(annot_colors$tissue_cols)) + 
   theme(plot.title = element_text(hjust = 0.5, size = 20, vjust = 1))
-ggsave(filename = paste0(fig_path, 'sup5/shared_LyII_up_venn.pdf'), width = 7, height = 6)
+ggsave(filename = paste0(fig_path, 'sup4/shared_LyII_up_venn.pdf'), width = 7, height = 6)
 
 df <- data.frame(sapply(list('up FL only' = setdiff(pos_df$Ly.II, pos_df_BM$Ly.II), 
                              'up in both' = na.omit(intersect(pos_df$Ly.II, pos_df_BM$Ly.II)), 
@@ -264,7 +270,7 @@ ggvenn(list('FL Ly-II' = neg_df$Ly.II, 'BM Ly-II' = neg_df_BM$Ly.II),
        show_percentage = FALSE, text_size = 14, fill_alpha = 0.7,  
        fill_color = unname(annot_colors$tissue_cols)) + 
   theme(plot.title = element_text(hjust = 0.5, size = 20, vjust = 1))
-ggsave(filename = paste0(fig_path, 'sup5/shared_LyII_dn_venn.pdf'), width = 7, height = 6)
+ggsave(filename = paste0(fig_path, 'sup4/shared_LyII_dn_venn.pdf'), width = 7, height = 6)
 
 ggvenn(list('FL GMP-II' = pos_df$GMP.II, 'BM GMP-II' = pos_df_BM$GMP.II), 
        show_percentage = FALSE, text_size = 14, fill_alpha = 0.7,  
@@ -312,6 +318,10 @@ orca(p = plot_cellradar(res_list = list(resly2, resgm2), colors = unname(annot_c
                         names = c('Ly-II', 'GMP-II'), opac = c(0.8, 0.8), dash = c('4px', '4px')),
      paste0(fig_path, 'fig4/BM_LyII_GMPII.pdf'), more_args = '--disable-gpu')
 
+orca(p = plot_cellradar(res_list = list(resly1, resgm1), colors = unname(annot_colors$cluster_cols[c('Ly-I', 'GMP-I')]), 
+                        names = c('Ly-I', 'GMP-I'), opac = c(0.8, 0.8), dash = c('4px', '4px')),
+     paste0(fig_path, 'sup4/BM_LyI_GMP-I.pdf'), more_args = '--disable-gpu')
+
 orca(p = plot_cellradar(res_list = list(resly2, resgm2, reser2), colors = unname(annot_colors$cluster_cols[c('Ly-II', 'GMP-II', 'Ery-II')]), 
                         names = c('Ly-II', 'GMP-II', 'Ery-II')),
      paste0(fig_path, 'additional_plots/BM_LyII_GMPII_EryII.pdf'), more_args = '--disable-gpu')
@@ -326,3 +336,10 @@ write.table(missinggenes, paste0(sup_table_path, '/BM_annot_CR_missinggenes.txt'
 
 table(na.omit(pos_df_BM$Ly.II) %in% resly2$nonexisting_genes)
 table(na.omit(pos_df_BM$GMP.II) %in% resgm2$nonexisting_genes)
+
+table(na.omit(pos_df_BM$Ly.I) %in% resly1$nonexisting_genes)
+table(na.omit(pos_df_BM$GMP.I) %in% resgm1$nonexisting_genes)
+
+
+
+
