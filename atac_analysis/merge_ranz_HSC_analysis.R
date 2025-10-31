@@ -14,6 +14,19 @@ da_peaks <- subset(da_peaks, avg_log2FC > 2 |  avg_log2FC < -2)
 
 table(da_peaks$tissue, da_peaks$avg_log2FC > 2)
 
+df <- data.frame(table(da_peaks$tissue, da_peaks$avg_log2FC > 2))
+
+colnames(df) <- c('Tissue', 'up_or_dn', 'count')
+df$up_or_dn <- factor(ifelse(df$up_or_dn == T, 'up', 'down'), levels = c('up', 'down'))
+
+ggplot(df, aes(x = Tissue, y = count, fill = up_or_dn)) + geom_bar(stat = 'identity', width = 0.6, position = 'dodge') + 
+  scale_fill_manual('up_or_dn', values = annot_colors$da_cols) +
+  theme_bw() + 
+  theme(plot.title = element_text(hjust = 0.5, size = 14, vjust = 1), 
+        axis.text.y = element_text(size = 12)) +
+  ggtitle('Peaks up- or downregulated compared to adult BM')
+ggsave(paste0(fig_path, 'fig3/DA_peaks_HSCs.pdf'), width = 5)
+
 da_peaks <- cbind(da_peaks, ClosestFeature(merged, regions = da_peaks$peak))
 
 # subset for peaks within 2kb of a gene for cellradar
@@ -28,13 +41,13 @@ res5 <- prep_data('human', unique(da_peaks2[da_peaks2$tissue == 'trim2_FL' & da_
 res6 <- prep_data('human', unique(da_peaks2[da_peaks2$tissue == 'trim2_BM' & da_peaks2$avg_log2FC < -2, 'gene_name']))
 
 orca(plot_cellradar(res_list = list(res1, res4), colors = c(annot_colors$tissue_cols[['FL']], annot_colors$tissue_cols[['BM']]), names = c('CS22 FL', 'Adult BM'), 
-                         dash = c('solid', '4px')), file = paste0(fig_path, 'fig3/da_peaks_genes_CS22_HSC_cr.pdf'), more_args = '--disable-gpu')
+                         dash = c('solid', '4px')), file = paste0(fig_path, 'additional_plots/da_peaks_genes_CS22_HSC_cr.pdf'), more_args = '--disable-gpu')
 
 orca(plot_cellradar(res_list = list(res2, res5), colors = c('#5949EB', annot_colors$tissue_cols[['BM']]), names = c('2nd trim FL', 'Adult BM'),
-                    dash = c('solid', '4px')), file = paste0(fig_path, 'sup3/da_peaks_genes_trim2_FL_HSC_cr.pdf'), more_args = '--disable-gpu')
+                    dash = c('solid', '4px')), file = paste0(fig_path, 'additional_plots/da_peaks_genes_trim2_FL_HSC_cr.pdf'), more_args = '--disable-gpu')
 
 orca(plot_cellradar(res_list = list(res3, res6), colors = c('#E8AB09', annot_colors$tissue_cols[['BM']]), names = c('2nd trim BM', 'Adult BM'),
-                    dash = c('solid', '4px')), file = paste0(fig_path, 'sup3/da_peaks_genes_trim2_BM_HSC_cr.pdf'), more_args = '--disable-gpu')
+                    dash = c('solid', '4px')), file = paste0(fig_path, 'additional_plots/da_peaks_genes_trim2_BM_HSC_cr.pdf'), more_args = '--disable-gpu')
 
 missinggenes <- data.frame('CS22_up' = str_flatten(res1$nonexisting_genes, collapse = ','), 
                            'trim2_FL_up' = str_flatten(res2$nonexisting_genes, collapse = ','),
@@ -123,7 +136,7 @@ Heatmap(hm_list[['CS22_FL']], cluster_columns = F, show_row_names = T, show_colu
 dev.off()
 
 
-pdf(paste0(fig_path, 'sup3/da_peak_motifs_', 'trim2_FL', '_HSC.pdf'), height = nrow(hm_list[['trim2_FL']])*0.25, width = 4)
+pdf(paste0(fig_path, 'fig3/da_peak_motifs_', 'trim2_FL', '_HSC.pdf'), height = nrow(hm_list[['trim2_FL']])*0.25, width = 4)
 Heatmap(hm_list[['trim2_FL']], cluster_columns = F, show_row_names = T, show_column_names = T, heatmap_legend_param = list(title = 'Fold enrichment'),
         column_names_side = 'top', column_names_rot = 0,
         column_names_centered = T, row_dend_reorder = F, row_names_gp = gpar(fontsize = 12))

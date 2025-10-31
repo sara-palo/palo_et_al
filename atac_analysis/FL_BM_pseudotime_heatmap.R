@@ -34,14 +34,13 @@ subsBM <- ScaleData(subsBM, assay = 'cisbpchromvar')
 
 annot_df_BM <- data.frame('cluster' = subsBM$clust.names[order(subsBM$merged_l2_ps)])
 column_ha_BM <- HeatmapAnnotation(df = annot_df_BM, col = list(
-  'cluster' = annot_colors$cluster_cols[as.character(unique(subsBM$clust.names))]
+  'cluster' = annot_colors$cluster_cols[as.character(unique(c(subsBM$clust.names, subsFL$clust.names)))]
 ))
 
 annot_df_FL <- data.frame('cluster' = subsFL$clust.names[order(subsFL$merged_l2_ps)])
 column_ha_FL <- HeatmapAnnotation(df = annot_df_FL, col = list(
-  'cluster' = annot_colors$cluster_cols[as.character(unique(subsFL$clust.names))]
+  'cluster' = annot_colors$cluster_cols[as.character(unique(c(subsBM$clust.names, subsFL$clust.names)))]
 ))
-
 
 
 mtx <- subsBM[['cisbpchromvar']]@scale.data[hm_motifs, order(subsBM$merged_l2_ps)]
@@ -64,23 +63,25 @@ dev.off()
 
 row_order <- row_order(hm)
 
+# plot FL and BM using the same row order
 mtxBM <- subsBM[['cisbpchromvar']]@scale.data[hm_motifs[row_order], order(subsBM$merged_l2_ps)]
-
-pdf(paste0(fig_path, 'sup4/BMsubs_l2_lymotifs_scaled.pdf'))
-Heatmap(mtxBM, cluster_columns = F, show_row_names = T, show_column_names = F, heatmap_legend_param = list(title = 'TFs'),
-        top_annotation = column_ha_BM, row_names_gp = gpar(fontsize = 6), cluster_rows = F, show_row_dend = F, use_raster = F)
-dev.off()
-
-# plot FL using the same row order
 mtxFL <- subsFL[['cisbpchromvar']]@scale.data[hm_motifs[row_order], order(subsFL$merged_l2_ps)]
 
-pdf(paste0(fig_path, 'sup4/FLsubs_l2_lymotifs_scaled.pdf'))
-Heatmap(mtxFL, cluster_columns = F, show_row_names = T, show_column_names = F, heatmap_legend_param = list(title = 'TFs'),
-        top_annotation = column_ha_FL, row_names_gp = gpar(fontsize = 6), cluster_rows = F, show_row_dend = F, use_raster = F)
+col_fun = circlize::colorRamp2(c(-4, -2, 0, 2, 4), c('#0000FFFF', '#7146FDFF', '#EEEEEEFF', '#FF5B3BFF', '#FF0000FF'))
+
+pdf(paste0(fig_path, 'fig4/BMsubs_l2_lymotifs_scaled_samecolor.pdf'))
+Heatmap(mtxBM, cluster_columns = F, show_row_names = T, show_column_names = F, heatmap_legend_param = list(title = 'TFs'),
+        top_annotation = column_ha_BM, row_names_gp = gpar(fontsize = 6), cluster_rows = F, show_row_dend = F, use_raster = F, col = col_fun)
 dev.off()
 
 
+pdf(paste0(fig_path, 'fig4/FLsubs_l2_lymotifs_scaled_samecolor.pdf'))
+Heatmap(mtxFL, cluster_columns = F, show_row_names = T, show_column_names = F, heatmap_legend_param = list(title = 'TFs'),
+        top_annotation = column_ha_FL, row_names_gp = gpar(fontsize = 6), cluster_rows = F, show_row_dend = F, use_raster = F, col = col_fun)
+dev.off()
 
+
+# without scaling
 mtxBM <- subsBM[['cisbpchromvar']]@data[hm_motifs[row_order], order(subsBM$merged_l2_ps)]
 
 pdf(paste0(fig_path, 'additional_plots/BMsubs_l2_lymotifs_unscaled.pdf'))
@@ -95,7 +96,5 @@ pdf(paste0(fig_path, 'additional_plots/FLsubs_l2_lymotifs_unscaled.pdf'))
 Heatmap(mtxFL, cluster_columns = F, show_row_names = T, show_column_names = F, heatmap_legend_param = list(title = 'TFs'),
         top_annotation = column_ha_FL, row_names_gp = gpar(fontsize = 6), cluster_rows = F, show_row_dend = F)
 dev.off()
-
-
 
 

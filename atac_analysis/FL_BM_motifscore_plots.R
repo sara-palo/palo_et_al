@@ -9,10 +9,10 @@ clusters_oi <- c('HSC', 'Ly-II', 'GMP-II')
 Idents(FL) <- 'pred.id.BM'
 
 VlnPlot(BM, 'Ly.II_UCell', cols = annot_colors$cluster_cols, pt.size = 0.1, idents = clusters_oi) + ylim(c(-0.1,1)) + NoLegend()
-ggsave(paste0(fig_path, 'sup5/BM_LyIIscore_vln.pdf'), width = 2.5, height = 3.1)
+ggsave(paste0(fig_path, 'sup4/BM_LyIIscore_vln.pdf'), width = 2.5, height = 3.1)
 
 VlnPlot(BM, 'GMP.II_UCell', cols = annot_colors$cluster_cols, pt.size = 0.1, idents = clusters_oi) + ylim(c(-0.1,1)) + NoLegend()
-ggsave(paste0(fig_path, 'sup5/BM_GMPIIscore_vln.pdf'), width = 2.5, height = 3.1)
+ggsave(paste0(fig_path, 'sup4/BM_GMPIIscore_vln.pdf'), width = 2.5, height = 3.1)
 
 VlnPlot(BM, 'Ly.II_UCell', cols = annot_colors$cluster_cols, pt.size = 0.1) + ylim(c(-0.1,1)) + NoLegend()
 ggsave(paste0(fig_path, 'additional_plots/BM_full_LyIIscore_vln.pdf'), width = 8)
@@ -27,10 +27,10 @@ VlnPlot(BM, 'Ery.II_UCell', cols = annot_colors$cluster_cols, pt.size = 0.1) + y
 ggsave(paste0(fig_path, 'additional_plots/BM_EryIIscore_vln.pdf'), width = 8)
 
 VlnPlot(FL, 'BM.Ly.II_UCell', cols = annot_colors$cluster_cols, pt.size = 0.1, idents = clusters_oi) + ylim(c(-0.1,1)) + NoLegend()
-ggsave(paste0(fig_path, 'sup5/FL_BMLyIIscore_vln.pdf'), width = 2.5, height = 3.1)
+ggsave(paste0(fig_path, 'sup4/FL_BMLyIIscore_vln.pdf'), width = 2.5, height = 3.1)
 
 VlnPlot(FL, 'BM.GMP.II_UCell', cols = annot_colors$cluster_cols, pt.size = 0.1, idents = clusters_oi) + ylim(c(-0.1,1)) + NoLegend()
-ggsave(paste0(fig_path, 'sup5/FL_BMGMPIIscore_vln.pdf'), width = 2.5, height = 3.1)
+ggsave(paste0(fig_path, 'sup4/FL_BMGMPIIscore_vln.pdf'), width = 2.5, height = 3.1)
 
 VlnPlot(FL, 'BM.Ly.II_UCell', cols = annot_colors$cluster_cols, pt.size = 0.1) + ylim(c(-0.1,1)) + NoLegend()
 ggsave(paste0(fig_path, 'additional_plots/FL_full_BMLyIIscore_vln.pdf'), width = 8)
@@ -117,12 +117,8 @@ BMsubsmotifs$cluster <- factor(BMsubsmotifs$cluster)
 
 pcaBMsubs <- prcomp(BMsubsmotifs[, 1:(dim(BMsubsmotifs)[2]-1)])
 
-trng <- rep('triangle', length(clusters_oi))
-names(trng) <- clusters_oi
-
-autoplot(object = pcaBMsubs, data = BMsubsmotifs, color = 'cluster', shape = 'cluster', size = 1.1) +
+autoplot(object = pcaBMsubs, data = BMsubsmotifs, color = 'cluster', size = 1.1) +
   scale_color_manual(values = annot_colors$cluster_cols[clusters_oi]) +
-  scale_shape_manual(values = trng) +
   theme_bw()
 ggsave(paste0(fig_path, 'fig4/BM_lymy_top150motifs_pca.pdf'))
 
@@ -184,12 +180,8 @@ BMmotifs$cluster <- factor(BMmotifs$cluster)
 
 pcaBM <- prcomp(BMmotifs[, 1:(dim(BMmotifs)[2]-1)])
 
-trng <- rep('triangle', length(clust_order))
-names(trng) <- clust_order
-
-autoplot(object = pcaBM, data = BMmotifs, color = 'cluster', shape = 'cluster', size = 1.1) +
+autoplot(object = pcaBM, data = BMmotifs, color = 'cluster', size = 1.1) +
   scale_color_manual(values = annot_colors$cluster_cols) +
-  scale_shape_manual(values = trng) +
   theme_bw()
 ggsave(paste0(fig_path, 'additional_plots/BM_top150motifs_pca.pdf'))
 
@@ -208,14 +200,14 @@ ggplot(fl_chrmv, aes(y = GATA1, x = SPI1, color = sample)) +
   ylim(min(c(fl_chrmv$GATA1, bm_chrmv$GATA1)), max(c(fl_chrmv$GATA1, bm_chrmv$GATA1))) +
   xlim(min(c(fl_chrmv$SPI1, bm_chrmv$SPI1)), max(c(fl_chrmv$SPI1, bm_chrmv$SPI1))) +
   geom_point() + theme_bw() + coord_fixed()
-ggsave(paste0(fig_path, 'fig2/FL_GATA1_SPI1_scatter.pdf'))
+ggsave(paste0(fig_path, 'fig3/FL_GATA1_SPI1_scatter.pdf'))
 
 ggplot(bm_chrmv, aes(y = GATA1, x = SPI1, color = sample)) +
   scale_color_manual(values = annot_colors$tissue_cols) +
   ylim(min(c(fl_chrmv$GATA1, bm_chrmv$GATA1)), max(c(fl_chrmv$GATA1, bm_chrmv$GATA1))) +
   xlim(min(c(fl_chrmv$SPI1, bm_chrmv$SPI1)), max(c(fl_chrmv$SPI1, bm_chrmv$SPI1))) +
   geom_point() + theme_bw() + coord_fixed()
-ggsave(paste0(fig_path, 'fig2/BM_GATA1_SPI1_scatter.pdf'))
+ggsave(paste0(fig_path, 'fig3/BM_GATA1_SPI1_scatter.pdf'))
 
 ggplot(fl_chrmv, aes(x = EBF1, y = SPI1, color = sample)) +
   scale_color_manual(values = annot_colors$tissue_cols) +
