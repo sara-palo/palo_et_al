@@ -113,7 +113,7 @@ DimPlot(cvejic, label = TRUE, pt.size = 0.6) + coord_fixed() + NoLegend()
 ggsave(paste0(fig_path, 'additional_plots/cvejic_subset.pdf'), width = 10)
 
 DimPlot(cvejic, label = F, pt.size = 0.4, group.by = 'sample', shuffle = T, cols = annot_colors$sample_number2nd) + coord_fixed() 
-ggsave(paste0(fig_path, 'sup3/cvejic_subset_samp.pdf'), width = 10)
+ggsave(paste0(fig_path, 'additional_plots/cvejic_subset_samp.pdf'), width = 10)
 
 DimPlot(cvejic, label = F, pt.size = 0.6, split.by = 'sample') + coord_fixed() + NoLegend()
 ggsave(paste0(fig_path, 'additional_plots/cvejic_subset_persample.pdf'), width = 10)
@@ -194,7 +194,7 @@ FL$pred.id.score.cvejic <- pred.id.score.cvejic
 saveRDS(FL, paste0(rds_path, 'FL_only.rds'))
 
 DimPlot(cvejic, reduction = 'umap', group.by = 'pred.id.CS22', pt.size = 0.6, cols = annot_colors$seurat_cluster_cols) + coord_fixed()
-ggsave(paste0(fig_path, 'fig3/cvejic_subset_proj_onFL.pdf'))
+ggsave(paste0(fig_path, 'additional_plots/cvejic_subset_proj_onFL.pdf'))
 
 VlnPlot(FL, 'pred.id.score.cvejic', group.by = 'seurat_clusters', pt.size = 0.01, cols = annot_colors$seurat_cluster_cols) + NoLegend()
 ggsave(paste0(fig_path, 'additional_plots/CS22_proj_on_cvejic_scores.pdf'), width = 8) 
@@ -300,5 +300,30 @@ saveRDS(cvejic, paste0(rds_path, 'cvejic_subset.rds'))
 DimPlot(cvejic, reduction = 'BMumap', group.by = 'pred.id.BM', pt.size = 0.6, cols = annot_colors$cluster_cols) + coord_fixed() |
   DimPlot(cvejic, reduction = 'umap', group.by = 'pred.id.BM', pt.size = 0.6, cols = annot_colors$cluster_cols) + coord_fixed()
 ggsave(paste0(fig_path, 'additional_plots/cvejic_subset_proj_onBM.pdf'), width = 10)
+
+
+VlnPlot(cvejic, 'pred.id.score.BM', group.by = 'pred.id.BM', cols = annot_colors$cluster_cols, pt.size = 0.01) + NoLegend() + ylim(0, 1.05)
+ggsave(paste0(fig_path, 'sup4/mard_proj_on_BM_scores_predIDs_BM.pdf'), width = 8) 
+
+# load Ranzoni et al data and plot BM UMAP using the same x and y axis ranges for all 4 datasets
+ranz <- readRDS(paste0(rds_path, 'ranzoni.rds'))
+
+xlims <- range(c(BM[['umap']]@cell.embeddings[,1], FL[['BMumap']]@cell.embeddings[,1], ranz[['BMumap']]@cell.embeddings[,1], cvejic[['BMumap']]@cell.embeddings[,1]))
+ylims <- range(c(BM[['umap']]@cell.embeddings[,2], FL[['BMumap']]@cell.embeddings[,2], ranz[['BMumap']]@cell.embeddings[,2], cvejic[['BMumap']]@cell.embeddings[,2]))
+
+DimPlot(ranz, reduction = 'BMumap', group.by = 'pred.id.BM', pt.size = 0.6, cols = annot_colors$cluster_cols) + coord_fixed() + xlim(xlims) + ylim(ylims)
+ggsave(paste0(fig_path, 'sup3/ranz_proj_onBM.pdf'))
+
+DimPlot(FL, reduction = 'BMumap', group.by = 'pred.id.BM', pt.size = 0.6, cols = annot_colors$cluster_cols) + coord_fixed() + xlim(xlims) + ylim(ylims)
+ggsave(paste0(fig_path, 'fig2/FL_projected_on_BM.pdf'))
+
+DimPlot(BM, reduction = 'umap', group.by = 'BM_annot', pt.size = 0.6, cols = annot_colors$cluster_cols, label = T) + coord_fixed() + xlim(xlims) + ylim(ylims)
+ggsave(paste0(fig_path, 'fig2/BM_umap.pdf'))
+
+DimPlot(BM, reduction = 'umap', group.by = 'sample_number', pt.size = 0.5, cols = annot_colors$sample_numberBM, shuffle = T) + coord_fixed() + xlim(xlims) + ylim(ylims)
+ggsave(paste0(fig_path, 'sup2/BM_umap_harmony.pdf'))
+
+DimPlot(cvejic, reduction = 'BMumap', group.by = 'pred.id.BM', pt.size = 0.6, cols = annot_colors$cluster_cols) + coord_fixed() + xlim(xlims) + ylim(ylims)
+ggsave(paste0(fig_path, 'sup4/mard_proj_onBM.pdf'))
 
 

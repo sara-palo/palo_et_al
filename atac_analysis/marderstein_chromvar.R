@@ -216,6 +216,8 @@ library(ggfortify)
 
 clusters_oi <- c('Ly-I', 'Ly-II', 'GMP-II')
 
+pca_cols <- c('Ly-I' = '#BC89CC', 'Ly-II' = '#63226E', 'GMP-II' = '#2874A6')
+
 cvsubs <- subset(cvejic, pred.id.BM %in% clusters_oi)
 
 cvvars <- apply(cvsubs[['cisbpchromvar']]@data, 1, var)
@@ -236,7 +238,7 @@ cvsubsmotifs$cluster <- factor(cvsubsmotifs$cluster)
 pcacvsubs <- prcomp(cvsubsmotifs[, 1:(dim(cvsubsmotifs)[2]-1)])
 
 autoplot(object = pcacvsubs, data = cvsubsmotifs, color = 'cluster', size = 1.1) +
-  scale_color_manual(values = annot_colors$cluster_cols[clusters_oi]) + 
+  scale_color_manual(values = pca_cols) + 
   theme_bw()
 ggsave(paste0(fig_path, 'fig4/mard_lymy_top150motifs_pca.pdf'))
 

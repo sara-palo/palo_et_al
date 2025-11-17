@@ -10,16 +10,17 @@ Idents(merged) <- 'tissue'
 
 da_peaks <- read.csv(paste0(csv_path_da, '/FLvsBM/merged_ranz_da_peaks_HSCs_vs_adult.csv'))
 da_peaks <- subset(da_peaks, p_val_adj < 0.05)
-da_peaks <- subset(da_peaks, avg_log2FC > 2 |  avg_log2FC < -2)
+da_peaks <- subset(da_peaks, avg_log2FC > 2 | avg_log2FC < -2)
 
 table(da_peaks$tissue, da_peaks$avg_log2FC > 2)
 
 df <- data.frame(table(da_peaks$tissue, da_peaks$avg_log2FC > 2))
 
-colnames(df) <- c('Tissue', 'up_or_dn', 'count')
+colnames(df) <- c('tissue', 'up_or_dn', 'count')
 df$up_or_dn <- factor(ifelse(df$up_or_dn == T, 'up', 'down'), levels = c('up', 'down'))
+df$tissue <- factor(df$tissue, levels = c('CS22_FL', 'trim2_FL', 'trim2_BM'))
 
-ggplot(df, aes(x = Tissue, y = count, fill = up_or_dn)) + geom_bar(stat = 'identity', width = 0.6, position = 'dodge') + 
+ggplot(df, aes(x = tissue, y = count, fill = up_or_dn)) + geom_bar(stat = 'identity', width = 0.6, position = 'dodge') + 
   scale_fill_manual('up_or_dn', values = annot_colors$da_cols) +
   theme_bw() + 
   theme(plot.title = element_text(hjust = 0.5, size = 14, vjust = 1), 
@@ -126,7 +127,7 @@ for (name in c('CS22_FL', 'trim2_FL', 'trim2_BM')){
   hm_list[[name]] <- mtx
   
   write.csv(enr.res.pos, paste0(sup_table_path, '/', name, '_HSC_motif_enrichment_pos.csv'), row.names = T)
-  write.csv(enr.res.pos, paste0(sup_table_path, '/', name, '_HSC_motif_enrichment_neg.csv'), row.names = T)
+  write.csv(enr.res.neg, paste0(sup_table_path, '/', name, '_HSC_motif_enrichment_neg.csv'), row.names = T)
 }
 
 pdf(paste0(fig_path, 'fig3/da_peak_motifs_', 'CS22_FL', '_HSC.pdf'), height = nrow(hm_list[['CS22_FL']])*0.25, width = 5)

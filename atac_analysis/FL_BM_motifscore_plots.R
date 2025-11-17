@@ -57,6 +57,8 @@ ggsave(paste0(fig_path, 'additional_plots/FL_full_FLLyIIscore_vln.pdf'), width =
 # PCA for only Ly and GMP-II
 clusters_oi <- c('Ly-I', 'Ly-II', 'GMP-II')
 
+pca_cols <- c('Ly-I' = '#BC89CC', 'Ly-II' = '#63226E', 'GMP-II' = '#2874A6')
+
 FLsubs <- subset(FL, pred.id.BM %in% clusters_oi)
 BMsubs <- subset(BM, BM_annot %in% clusters_oi)
 
@@ -85,7 +87,7 @@ FLsubsmotifs$cluster <- factor(FLsubsmotifs$cluster)
 pcaFLsubs <- prcomp(FLsubsmotifs[, 1:(dim(FLsubsmotifs)[2]-1)])
 
 autoplot(object = pcaFLsubs, data = FLsubsmotifs, color = 'cluster', size = 1.1) +
-  scale_color_manual(values = annot_colors$cluster_cols[clusters_oi]) + 
+  scale_color_manual(values = pca_cols) + 
   theme_bw()
 ggsave(paste0(fig_path, 'fig4/FL_lymy_top150motifs_pca.pdf'))
 
@@ -118,7 +120,7 @@ BMsubsmotifs$cluster <- factor(BMsubsmotifs$cluster)
 pcaBMsubs <- prcomp(BMsubsmotifs[, 1:(dim(BMsubsmotifs)[2]-1)])
 
 autoplot(object = pcaBMsubs, data = BMsubsmotifs, color = 'cluster', size = 1.1) +
-  scale_color_manual(values = annot_colors$cluster_cols[clusters_oi]) +
+  scale_color_manual(values = pca_cols) +
   theme_bw()
 ggsave(paste0(fig_path, 'fig4/BM_lymy_top150motifs_pca.pdf'))
 

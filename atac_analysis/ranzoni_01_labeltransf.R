@@ -153,12 +153,19 @@ ranz[['BMumap']] <- BMumap
 
 saveRDS(ranz, paste0(rds_path, 'ranzoni.rds'))
 
-DimPlot(ranz, reduction = 'BMumap', group.by = 'pred.id.BM', pt.size = 0.6, cols = annot_colors$cluster_cols) + coord_fixed() |
-  DimPlot(ranz, reduction = 'paper_UMAP', group.by = 'pred.id.BM', pt.size = 0.6, cols = annot_colors$cluster_cols) + coord_fixed()
-ggsave(paste0(fig_path, 'additional_plots/ranz_proj_onBM.pdf'), width = 10)
+VlnPlot(ranz, 'pred.id.score.BM', group.by = 'paper_cluster', pt.size = 0.01) + NoLegend()
+ggsave(paste0(fig_path, 'additional_plots/ranz_proj_on_BM_scores_paperclust.pdf'), width = 6) 
+
+VlnPlot(ranz, 'pred.id.score.BM', group.by = 'pred.id.BM', pt.size = 0.01, cols = annot_colors$cluster_cols) + NoLegend() + ylim(0, 1.05)
+ggsave(paste0(fig_path, 'sup3/ranz_proj_on_BM_scores_predIDs_BM.pdf'), width = 8) 
+
+DimPlot(ranz, reduction = 'paper_UMAP', group.by = 'pred.id.BM', pt.size = 0.6, cols = annot_colors$cluster_cols) + coord_fixed()
+ggsave(paste0(fig_path, 'additional_plots/ranz_BM_predIDs.pdf'))
 
 VlnPlot(ranz, 'pred.id.score.BM', group.by = 'seurat_clusters', pt.size = 0.01, cols = annot_colors$seurat_cluster_cols) + NoLegend()
 ggsave(paste0(fig_path, 'additional_plots/ranz_proj_on_BM_scores.pdf'), width = 8) 
 
 VlnPlot(ranz, 'nCount_peaks', group.by = 'pred.id.BM', cols = annot_colors$cluster_cols) + NoLegend() 
 ggsave(paste0(fig_path, 'additional_plots/ranz_peak_counts_predIDs_BM.pdf'), width = 8)
+
+

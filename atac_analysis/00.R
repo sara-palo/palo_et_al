@@ -24,8 +24,8 @@ for(dir in dirs){
   }
 }
 
-main_figs <- paste0('fig', 1:5)
-sup_figs <- paste0('sup', 1:5)
+main_figs <- paste0('fig', 1:4)
+sup_figs <- paste0('sup', 1:4)
 
 for(i in c(main_figs, sup_figs, 'additional_plots')){
   dir <- paste0(fig_path, i)
