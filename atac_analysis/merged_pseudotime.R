@@ -152,21 +152,13 @@ BM <- ScaleData(BM, assay = 'cisbpchromvar')
 BM$clust.names <- BM$BM_annot
 
 
-tf_dotplot(FL, end_cluster = 'merged_l2_ps', assay = 'cisbpchromvar', features = c('TCF3', 'EBF1', 'PAX5', 'CEBPA'), 
+tf_dotplot(FL, end_cluster = 'merged_l2_ps', assay = 'cisbpchromvar', features = c('RUNX1', 'TCF3', 'EBF1', 'PAX5', 'CEBPA'), 
            slot_to_use = 'scale.data', include.dots = F, xmax = max(BM$merged_l2_ps, na.rm = T), ymin = -4.1, ymax = 10) 
 ggsave(paste0(fig_path, 'fig4/FL_mergedumap_l2ps_motifs_B.pdf'))
 
-tf_dotplot(BM, end_cluster = 'merged_l2_ps', assay = 'cisbpchromvar', features = c('TCF3', 'EBF1', 'PAX5', 'CEBPA'), 
+tf_dotplot(BM, end_cluster = 'merged_l2_ps', assay = 'cisbpchromvar', features = c('RUNX1','TCF3', 'EBF1', 'PAX5', 'CEBPA'), 
            slot_to_use = 'scale.data', include.dots = F,  xmax = max(BM$merged_l2_ps, na.rm = T, ymin = -4.1, ymax = 10)) 
 ggsave(paste0(fig_path, 'fig4/BM_mergedumap_l2ps_motifs_B.pdf'))
-
-tf_dotplot(FL, end_cluster = 'merged_l2_ps', assay = 'cisbpchromvar', features = c('ETV6', 'RUNX1', 'CBFB', 'CEBPA'), 
-           slot_to_use = 'scale.data', include.dots = F, xmax = max(BM$merged_l2_ps, na.rm = T), ymin = -3.7, ymax = 5.1) 
-ggsave(paste0(fig_path, 'fig4/FL_mergedumap_l2ps_motifs_ALL.pdf'))
-
-tf_dotplot(BM, end_cluster = 'merged_l2_ps', assay = 'cisbpchromvar', features = c('ETV6', 'RUNX1', 'CBFB', 'CEBPA'), 
-           slot_to_use = 'scale.data', include.dots = F,  xmax = max(BM$merged_l2_ps, na.rm = T), ymin = -3.7, ymax = 5.1) 
-ggsave(paste0(fig_path, 'fig4/BM_mergedumap_l2ps_motifs_ALL.pdf'))
 
 
 cols <- annot_colors$cluster_cols[c('Ly-II','GMP-II')]
@@ -174,7 +166,7 @@ names(cols) <- c('BM.Ly.II_UCell', 'BM.GMP.II_UCell')
 
 tf_dotplot(FL, end_cluster = 'merged_l2_ps', assay = 'metadata', features = c('BM.Ly.II_UCell', 'BM.GMP.II_UCell'), include.dots = F, 
            xmax = max(BM$merged_l2_ps, na.rm = T), colors = cols, ymin = 0, ymax = 1.1) 
-ggsave(paste0(fig_path, 'fig4/FL_mergedumap_l2ps_BMmodscores.pdf'))
+ggsave(paste0(fig_path, 'additional_plots/FL_mergedumap_l2ps_BMmodscores.pdf'))
 
 tf_dotplot(FL, end_cluster = 'merged_m1_ps', assay = 'metadata', features = c('BM.Ly.II_UCell', 'BM.GMP.II_UCell'), include.dots = F, 
            xmax = max(c(BM$merged_m1_ps, FL$merged_m1_ps), na.rm = T), colors = cols, ymin = 0, ymax = 1.1) 
@@ -185,7 +177,7 @@ names(cols) <- c('Ly.II_UCell', 'GMP.II_UCell')
 
 tf_dotplot(BM, end_cluster = 'merged_l2_ps', assay = 'metadata', features = c('Ly.II_UCell', 'GMP.II_UCell'), include.dots = F, 
            xmax = max(BM$merged_l2_ps, na.rm = T), colors = cols, ymin = 0, ymax = 1.1) 
-ggsave(paste0(fig_path, 'fig4/BM_mergedumap_l2ps_BMmodscores.pdf'))
+ggsave(paste0(fig_path, 'additional_plots/BM_mergedumap_l2ps_BMmodscores.pdf'))
 
 tf_dotplot(BM, end_cluster = 'merged_m1_ps', assay = 'metadata', features = c('Ly.II_UCell', 'GMP.II_UCell'), include.dots = F, 
            xmax = max(c(BM$merged_m1_ps, FL$merged_m1_ps), na.rm = T), colors = cols, ymin = 0, ymax = 1.1) 
@@ -204,10 +196,9 @@ ggsave(paste0(fig_path, 'additional_plots/BM_mergedumap_l2ps_FLmodscores.pdf'))
 
 # compare end points (final 10% of the pseudotime)
 FL$l2_ps_cut <- cut(FL$merged_l2_ps, breaks = 10)
-BM$l2_ps_cut <- cut(BM$merged_l2_ps, breaks = 10)
+# BM$l2_ps_cut <- cut(BM$merged_l2_ps, breaks = 10)
 
 levels(FL$l2_ps_cut)[10]
-levels(BM$l2_ps_cut)[10]
 
 # choose the last range for FL pseudotime 
 fl_r10 <- WhichCells(FL, expression = l2_ps_cut == levels(FL$l2_ps_cut)[10])
@@ -219,7 +210,7 @@ hist(FL_df$diff)
 
 # select BM cells in the same range of pseudotime as FL
 bm_r10 <- WhichCells(BM, expression = merged_l2_ps >= min(FL_df$merged_l2_ps) & merged_l2_ps <= max(FL_df$merged_l2_ps))
-BM_df <- BM@meta.data[!is.na(BM$l2_ps_cut), ]
+BM_df <- BM@meta.data[!is.na(BM$merged_l2_ps), ]
 BM_df <- BM_df[bm_r10, c('Ly.II_UCell', 'GMP.II_UCell', 'merged_l2_ps')]
 BM_df$diff <- BM_df$Ly.II_UCell - BM_df$GMP.II_UCell
 hist(BM_df$diff)
@@ -238,24 +229,24 @@ cols <- annot_colors$cluster_cols[c('Ly-II','GMP-II')]
 names(cols) <- c('BM.Ly.II_UCell', 'BM.GMP.II_UCell')
 
 tf_dotplot(FL, end_cluster = 'merged_l2_ps', assay = 'metadata', features = c('BM.Ly.II_UCell', 'BM.GMP.II_UCell'), include.dots = T, 
-           xmax = max(BM$merged_l2_ps, na.rm = T), ymin = 0, ymax = 1.1, mark_range = c(min(FL_df$merged_l2_ps), max(FL_df$merged_l2_ps)), 
+           xmax = max(BM$merged_l2_ps, na.rm = T), ymin = 0, ymax = 1.1, mark_range = range(FL_df$merged_l2_ps), 
            colors = cols)  
 ggsave(paste0(fig_path, 'fig4/FL_l2ps_stat_range.pdf'), width = 8, height = 4.3)
 
 tf_dotplot(FL, end_cluster = 'merged_l2_ps', assay = 'metadata', features = c('BM.Ly.II_UCell', 'BM.GMP.II_UCell'), include.dots = F, 
-           xmax = max(BM$merged_l2_ps, na.rm = T), ymin = 0, ymax = 1.1, mark_range = c(min(FL_df$merged_l2_ps), max(FL_df$merged_l2_ps)), 
+           xmax = max(BM$merged_l2_ps, na.rm = T), ymin = 0, ymax = 1.1, mark_range = range(FL_df$merged_l2_ps), 
            colors = cols)  
-ggsave(paste0(fig_path, 'fig4/FL_l2ps_stat_range_nodots.pdf'), width = 8, height = 4.3)
+ggsave(paste0(fig_path, 'additional_plots/FL_l2ps_stat_range_nodots.pdf'), width = 8, height = 4.3)
 
 names(cols) <- c('Ly.II_UCell', 'GMP.II_UCell')
 
 tf_dotplot(BM, end_cluster = 'merged_l2_ps', assay = 'metadata', features = c('Ly.II_UCell', 'GMP.II_UCell'), include.dots = T, 
-           xmax = max(BM$merged_l2_ps, na.rm = T), ymin = 0, ymax = 1.1, mark_range = c(min(FL_df$merged_l2_ps), max(FL_df$merged_l2_ps)), colors = cols)
+           xmax = max(BM$merged_l2_ps, na.rm = T), ymin = 0, ymax = 1.1, mark_range = range(FL_df$merged_l2_ps), colors = cols)
 ggsave(paste0(fig_path, 'fig4/BM_l2ps_stat_range.pdf'), width = 8, height = 4.3)
 
 tf_dotplot(BM, end_cluster = 'merged_l2_ps', assay = 'metadata', features = c('Ly.II_UCell', 'GMP.II_UCell'), include.dots = F, 
-           xmax = max(BM$merged_l2_ps, na.rm = T), ymin = 0, ymax = 1.1, mark_range = c(min(FL_df$merged_l2_ps), max(FL_df$merged_l2_ps)), colors = cols)
-ggsave(paste0(fig_path, 'fig4/BM_l2ps_stat_range_nodots.pdf'), width = 8, height = 4.3)
+           xmax = max(BM$merged_l2_ps, na.rm = T), ymin = 0, ymax = 1.1, mark_range = range(FL_df$merged_l2_ps), colors = cols)
+ggsave(paste0(fig_path, 'additional_plots/BM_l2ps_stat_range_nodots.pdf'), width = 8, height = 4.3)
 
 
 plot_df <- rbind(FL_df[,3:4], BM_df[,3:4])
@@ -266,50 +257,56 @@ ggplot(plot_df, aes(x = trajectory, y = diff, fill = trajectory)) +
   geom_boxplot(outlier.shape = NA, width = 0.6, alpha = 0.9) + theme_classic() + 
   geom_jitter(width = 0.2, alpha = 0.5, size = 1.1) +
   scale_fill_manual(values = annot_colors$tissue_cols)
-ggsave(paste0(fig_path, 'sup5/FL_BM_pseudotime_score_diffs_box.pdf'), width = 4, height = 5)
+ggsave(paste0(fig_path, 'sup4/FL_BM_pseudotime_score_diffs_box.pdf'), width = 4, height = 5)
 
 # stats for PAX5
-FL_df_pax5 <- data.frame('PAX5' = FL[['cisbpchromvar']]@scale.data['PAX5', fl_r10],
-                         'CEBPA' = FL[['cisbpchromvar']]@scale.data['CEBPA', fl_r10],
-                         'l2_ps' = FL@meta.data[fl_r10, 'merged_l2_ps']) 
+goi <- c('TCF3', 'EBF1', 'PAX5', 'RUNX1', 'CEBPA')
+FL_df <- data.frame(t(FL[['cisbpchromvar']]@scale.data[goi, fl_r10]))
+FL_df$l2_ps <- FL@meta.data[fl_r10, 'merged_l2_ps']
 
-FL_df_pax5$diff <- FL_df_pax5$PAX5 - FL_df_pax5$CEBPA
-hist(FL_df_pax5$diff)
+BM_df <- data.frame(t(BM[['cisbpchromvar']]@scale.data[goi, bm_r10]))
+BM_df$l2_ps <- BM@meta.data[bm_r10, 'merged_l2_ps']
 
-BM_df_pax5 <- data.frame('PAX5' = BM[['cisbpchromvar']]@scale.data['PAX5', bm_r10],
-                         'CEBPA' = BM[['cisbpchromvar']]@scale.data['CEBPA', bm_r10],
-                         'l2_ps' = BM@meta.data[bm_r10, 'merged_l2_ps'])
+res_df <- data.frame()
+tfs <- c('TCF3', 'EBF1', 'PAX5', 'RUNX1')
 
-BM_df_pax5$diff <- BM_df_pax5$PAX5 - BM_df_pax5$CEBPA
-hist(BM_df_pax5$diff)
+for (tf in tfs){
+  
+  FLdiff <- FL_df[, tf] - FL_df[, 'CEBPA']
+  BMdiff <- BM_df[, tf] - BM_df[, 'CEBPA']
+  
+  plot_df <- data.frame('diff'= c(FLdiff, BMdiff), 'trajectory' = c(rep('FL', nrow(FL_df)), rep('BM', nrow(BM_df))))
+  plot_df$trajectory <- factor(plot_df$trajectory, levels = c('FL', 'BM'))
+  
+  wc <- wilcox.test(FLdiff, BMdiff)
+  
+  if(wc$p.value < 0.05){
+    p <- ggplot(plot_df, aes(x = trajectory, y = diff, fill = trajectory)) + 
+      geom_boxplot(outlier.shape = NA, width = 0.6, alpha = 0.9) + theme_classic() + 
+      geom_jitter(width = 0.2, alpha = 0.5, size = 1.1) +
+      scale_fill_manual(values = annot_colors$tissue_cols)
+    print(p)
+    ggsave(plot = p, filename = paste0(fig_path, 'sup4/FL_BM_pseudotime_', tf, '_diffs_box.pdf'), width = 4, height = 5)
+  }
+  
+  res_df <- rbind(res_df, data.frame('FL_mean_diff' = mean(FLdiff), 'BM_mean_diff' = mean(BMdiff),
+                                     'FL_median_diff' = median(FLdiff), 'BM_median_diff' = median(BMdiff), 
+                                     'wilcox_pval' = wc$p.value))
+}
 
-plot_df <- rbind(FL_df_pax5, BM_df_pax5)
-plot_df$trajectory <- c(rep('FL', nrow(FL_df_pax5)), rep('BM', nrow(BM_df_pax5)))
-plot_df$trajectory <- factor(plot_df$trajectory, levels = c('FL', 'BM'))
+rownames(res_df) <- tfs
+res_df$p_adj <- p.adjust(res_df$wilcox_pval, method = 'bonf')
 
-ggplot(plot_df, aes(x = trajectory, y = diff, fill = trajectory)) + 
-  geom_boxplot(outlier.shape = NA, width = 0.6, alpha = 0.9) + theme_classic() + 
-  geom_jitter(width = 0.2, alpha = 0.5, size = 1.1) +
-  scale_fill_manual(values = annot_colors$tissue_cols)
-ggsave(paste0(fig_path, 'sup5/FL_BM_pseudotime_pax5_diffs_box.pdf'), width = 4, height = 5)
+write.csv(res_df, paste0(csv_path, 'sup/pseudotime_motifs_FLvsBM_stat.csv'))
 
-wc <- wilcox.test(FL_df_pax5$diff, BM_df_pax5$diff)
 
-mean(FL_df_pax5$diff)
-mean(BM_df_pax5$diff)
-
-stats_df <- data.frame('FL_mean_diff' = mean(FL_df_pax5$diff), 'BM_mean_diff' = mean(BM_df_pax5$diff),
-                       'FL_median_diff' = median(FL_df_pax5$diff), 'BM_median_diff' = median(BM_df_pax5$diff), 
-                       'wilcox_pval' = wc$p.value)
-write.csv(stats_df, paste0(csv_path, 'sup/pseudotime_PAX5_FLvsBM_stat.csv'))
-
-tf_dotplot(FL, end_cluster = 'merged_l2_ps', assay = 'cisbpchromvar', features = c('TCF3', 'EBF1', 'PAX5', 'CEBPA'), 
+tf_dotplot(FL, end_cluster = 'merged_l2_ps', assay = 'cisbpchromvar', features = c('TCF3', 'EBF1', 'PAX5', 'CEBPA', 'RUNX1'), 
            slot_to_use = 'scale.data', include.dots = F, xmax = max(BM$merged_l2_ps, na.rm = T), 
-           mark_range = c(min(FL_df$merged_l2_ps), max(FL_df$merged_l2_ps)), ymin = -4.1, ymax = 10) 
+           mark_range = range(FL_df$l2_ps), ymin = -4.1, ymax = 10) 
 ggsave(paste0(fig_path, 'fig4/FL_l2ps_motifs_B_markrange.pdf'))
 
-tf_dotplot(BM, end_cluster = 'merged_l2_ps', assay = 'cisbpchromvar', features = c('TCF3', 'EBF1', 'PAX5', 'CEBPA'), 
+tf_dotplot(BM, end_cluster = 'merged_l2_ps', assay = 'cisbpchromvar', features = c('TCF3', 'EBF1', 'PAX5', 'CEBPA', 'RUNX1'), 
            slot_to_use = 'scale.data', include.dots = F,  xmax = max(BM$merged_l2_ps, na.rm = T), 
-           mark_range = c(min(FL_df$merged_l2_ps), max(FL_df$merged_l2_ps)), ymin = -4.1, ymax = 10)
+           mark_range = range(FL_df$l2_ps), ymin = -4.1, ymax = 10)
 ggsave(paste0(fig_path, 'fig4/BM_l2ps_motifs_B_markrange.pdf'))
 

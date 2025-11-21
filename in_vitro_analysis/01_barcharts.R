@@ -1,9 +1,8 @@
-# Load required libraries
 library(tidyverse)
 library(readxl)
 library(ggplot2)
-library(renv)
 library(ggalluvial)
+library(patchwork)
 
 set.seed(123)
 
@@ -167,6 +166,31 @@ ggplot(count_df_perc, aes(x = tissue, y = NK_pos, color = tissue)) + geom_boxplo
   geom_point(color = "black", size = 1.4) + scale_color_manual(values = tissue_colors) + theme_classic() + ylim(0,1)
 ggsave(paste0(out_dir, "fig1/NK_perc_of_clones.pdf"), width = 4)
 
+# plot lineage output % with numbers for data checking
+b <- ggplot(count_df_perc, aes(x = tissue, y = B_pos, color = tissue)) +
+  geom_point(color = "black", size = 0.7) + scale_color_manual(values = tissue_colors) + theme_classic() + ylim(0,1) +
+  geom_text(aes(label = round(B_pos, 3)), position = position_jitter(width = 0.4, height = 0.07)) 
+
+m <- ggplot(count_df_perc, aes(x = tissue, y = Mono_pos, color = tissue)) +
+  geom_point(color = "black", size = 0.7) + scale_color_manual(values = tissue_colors) + theme_classic() + ylim(0,1) +
+  geom_text(aes(label = round(Mono_pos, 3)), position = position_jitter(width = 0.4, height = 0.07)) 
+
+mk <- ggplot(count_df_perc, aes(x = tissue, y = Mk_pos, color = tissue)) +
+  geom_point(color = "black", size = 0.7) + scale_color_manual(values = tissue_colors) + theme_classic() + ylim(0,1) +
+  geom_text(aes(label = round(Mk_pos, 3)), position = position_jitter(width = 0.4, height = 0.07)) 
+
+rbc <- ggplot(count_df_perc, aes(x = tissue, y = RBC_pos, color = tissue)) +
+  geom_point(color = "black", size = 0.7) + scale_color_manual(values = tissue_colors) + theme_classic() + ylim(0,1) +
+  geom_text(aes(label = round(RBC_pos, 3)), position = position_jitter(width = 0.4, height = 0.07)) 
+
+nk <- ggplot(count_df_perc, aes(x = tissue, y = NK_pos, color = tissue)) +
+  geom_point(color = "black", size = 0.7) + scale_color_manual(values = tissue_colors) + theme_classic() + ylim(0,1) +
+  geom_text(aes(label = round(NK_pos, 3)), position = position_jitter(width = 0.4, height = 0.07)) 
+
+pdf(paste0(out_dir, "additional_plots/perc_of_clones_numbers_FL_CB_BM.pdf"), width = 12, height = 8)
+print(b + m + mk + rbc + nk)
+dev.off()
+
 
 # plot B/Mono output
 df_all$B_mono <- paste0(df_all$B_pos, df_all$Mono_pos)
@@ -191,9 +215,20 @@ ggplot(data = plot_df,
   scale_fill_manual(values = B_mono_colors)
 ggsave(paste0(out_dir, "sup1/B_mono_counts_river.pdf"), width = 4.5)
 
+ggplot(data = plot_df,
+       aes(x = group, y = n, alluvium = B_mono, 
+           fill = B_mono, stratum = B_mono)) +
+  geom_alluvium() +
+  geom_stratum(width = 0.5) + theme_classic() + 
+  scale_fill_manual(values = B_mono_colors) + 
+  geom_text(aes(label = n), position = position_stack(vjust = 0.5), size = 3.5)
+ggsave(paste0(out_dir, "additional_plots/B_mono_counts_river_numbers.pdf"), width = 4.5)
+
+
 # divide by total number of colonies per sample group
 plot_df$tot <- table(df_all$Group)[match(plot_df$group, names(table(df_all$Group)))]
 plot_df$perc <- plot_df$n/plot_df$tot
+plot_df$perc <- as.numeric(plot_df$perc)
 
 ggplot(data = plot_df,
        aes(x = group, y = perc, alluvium = B_mono, 
@@ -203,6 +238,14 @@ ggplot(data = plot_df,
   scale_fill_manual(values = B_mono_colors)
 ggsave(paste0(out_dir, "fig1/B_mono_perc_river.pdf"), width = 4.5)
 
+ggplot(data = plot_df,
+       aes(x = group, y = perc, alluvium = B_mono, 
+           fill = B_mono, stratum = B_mono)) +
+  geom_alluvium() +
+  geom_stratum(width = 0.5) + theme_classic() + 
+  scale_fill_manual(values = B_mono_colors) + 
+  geom_text(aes(label = round(perc,3)), position = position_stack(vjust = 0.5), size = 3.5)
+ggsave(paste0(out_dir, "additional_plots/B_mono_perc_river_numbers.pdf"), width = 4.5)
 
 
 plot_df2 <- data.frame(table(df_all$Group_source, df_all$B_mono))
@@ -211,8 +254,9 @@ plot_df2$group <- factor(plot_df2$group, levels = c("FL_LP13", "FL_LP14A", "FL_L
 
 ggplot(plot_df2, aes(x = group, y = n, fill = B_mono)) + geom_col(width = 0.5) + theme_classic() + 
   scale_fill_manual(values = B_mono_colors) +
-  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust = 0.5))
-ggsave(paste0(out_dir, "additional_plots/B_mono_counts_persample.pdf"), width = 4.5)
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust = 0.5))+ 
+  geom_text(aes(label = n), position = position_stack(vjust = 0.5), size = 3.5)
+ggsave(paste0(out_dir, "additional_plots/B_mono_counts_persample.pdf"), width = 6, height = 4)
 
 
 group_labels <- c(

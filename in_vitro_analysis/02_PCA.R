@@ -75,6 +75,9 @@ pdf(paste0(out_dir, "sup1/PCA_plot_all_lineage_FL_CB_BM.pdf"), width = 10, heigh
 print(B_plot + Mono_plot + NK_plot + Ery_plot + Mk_plot)
 dev.off()
 
+pdf(paste0(out_dir, "additional_plots/PCA_plot_all_lineage_FL_CB_BM_ntot.pdf"), width = 10, height = 6)
+print(B_plot + Mono_plot + NK_plot + Ery_plot + Mk_plot) + labs(caption = paste0("N clones = ", nrow(pca_df)))
+dev.off()
 
 FL_plot <- ggplot() +
   geom_point(data = pca_df, aes(PC1, PC2),color = "grey80", size = 5, alpha = 0.6, stroke = 0) +
@@ -114,6 +117,12 @@ BM_plot <- ggplot() +
 
 pdf(paste0(out_dir, "sup1/PCA_plot_per_tissue.pdf"), width = 11, height = 4)
 print(FL_plot + CB_plot + BM_plot)
+dev.off()
+
+pdf(paste0(out_dir, "sup1/PCA_plot_per_tissue.pdf"), width = 10, height = 6)
+(FL_plot + labs(subtitle = paste0("N clones = ", length(which(pca_df$Group == "FL"))))) + 
+  (CB_plot + labs(subtitle = paste0("N clones = ", length(which(pca_df$Group == "CB"))))) +
+  (BM_plot + labs(subtitle = paste0("N clones = ", length(which(pca_df$Group == "BM")))))
 dev.off()
 
 
@@ -157,4 +166,20 @@ ggplot(plot_df, aes(x = Mono, y = B.inclCD11b.)) +
        fill = "Group", color = "Group")
 ggsave(paste0(out_dir, "fig1/B_mono_output_sep.pdf"), width = 10, height = 6)
 
+ggplot(plot_df, aes(x = Mono, y = B.inclCD11b.)) +
+  facet_wrap(~ Group, nrow = 1, scales = "fixed", axes = "all") +
+  geom_point(aes(color = Group), size = 1, stroke = 1) +
+  geom_vline(xintercept = 50, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = 50, linetype = "dashed", color = "black") +
+  scale_x_log10(limits = c(0.1, 250000)) +
+  scale_y_log10(limits = c(0.1, 250000)) +
+  coord_fixed() +
+  scale_color_manual(values = tissue_colors) +
+  theme_classic(base_size = 14) +
+  labs(x = "Mono", y = "B",
+       fill = "Group", color = "Group", 
+       title = paste0("FL clones = ", length(which(plot_df$Group == "FL")), 
+                      ", CB clones = ", length(which(plot_df$Group == "CB")), 
+                      ", BM clones = ", length(which(plot_df$Group == "BM"))))
+ggsave(paste0(out_dir, "additional_plots/B_mono_output_sep_counts.pdf"), width = 10, height = 6)
 
