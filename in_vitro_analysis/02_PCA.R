@@ -119,7 +119,7 @@ pdf(paste0(out_dir, "sup1/PCA_plot_per_tissue.pdf"), width = 11, height = 4)
 print(FL_plot + CB_plot + BM_plot)
 dev.off()
 
-pdf(paste0(out_dir, "sup1/PCA_plot_per_tissue.pdf"), width = 10, height = 6)
+pdf(paste0(out_dir, "additional_plots/PCA_plot_per_tissue.pdf"), width = 10, height = 6)
 (FL_plot + labs(subtitle = paste0("N clones = ", length(which(pca_df$Group == "FL"))))) + 
   (CB_plot + labs(subtitle = paste0("N clones = ", length(which(pca_df$Group == "CB"))))) +
   (BM_plot + labs(subtitle = paste0("N clones = ", length(which(pca_df$Group == "BM")))))
