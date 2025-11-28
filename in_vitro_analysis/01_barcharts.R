@@ -32,9 +32,9 @@ B_mono_colors <- c(
 )
 
 ### Read data
-df_all1 <- read_excel("in_vitro_data/LP12_RO.xls") %>% mutate(source = "LP12")
-df_all2 <- read_excel("in_vitro_data/LP13_RO.xls") %>% mutate(source = "LP13")
-df_all3 <- read_excel("in_vitro_data/LP14_RO.xls") %>%
+df_all1 <- read_excel("in_vitro_data/LP12_RO_regate.xls") %>% mutate(source = "LP12")
+df_all2 <- read_excel("in_vitro_data/LP13_RO_regate.xls") %>% mutate(source = "LP13")
+df_all3 <- read_excel("in_vitro_data/LP14_RO_regate.xls") %>%
   mutate(source = case_when(str_detect(...1, "^FL[123]") ~ "LP14A",
                             str_detect(...1, "^FL[456]") ~ "LP14B",TRUE ~ "LP14"))
 
@@ -95,7 +95,7 @@ ggplot(plot_df, aes(x = group, y = n, fill = pos_cat)) +
                     values = n_lin_colors) +
   labs(y = "# of clones", x = "Group") +
   theme_classic()
-ggsave(paste0(out_dir, "additional_plots/lin_per_clone_tot.pdf"), width = 5)
+ggsave(paste0(out_dir, "additional_plots/lin_per_clone_tot.pdf"), width = 5, height = 4.18)
 
 ggplot(plot_df, aes(x = group, y = prop, fill = pos_cat)) +
   geom_bar(stat = "identity", position = "stack", width = 0.6) +
@@ -105,7 +105,7 @@ ggplot(plot_df, aes(x = group, y = prop, fill = pos_cat)) +
                     values = n_lin_colors) +
   labs(y = "# of clones", x = "Group") +
   theme_classic()
-ggsave(paste0(out_dir, "additional_plots/lin_per_clone_perc.pdf"), width = 5)
+ggsave(paste0(out_dir, "additional_plots/lin_per_clone_perc.pdf"), width = 5, height = 4.18)
 
 
 ggplot(plot_df, aes(x = group, y = n, fill = pos_cat)) +
@@ -113,7 +113,7 @@ ggplot(plot_df, aes(x = group, y = n, fill = pos_cat)) +
   scale_fill_manual("Nr of lineages\nper clone", values = n_lin_colors) +
   labs(y = "# of clones", x = "Group") +
   theme_classic()
-ggsave(paste0(out_dir, "sup1/lin_per_clone_tot.pdf"), width = 5)
+ggsave(paste0(out_dir, "sup1/lin_per_clone_tot.pdf"), width = 5, height = 4.18)
 
 ggplot(plot_df, aes(x = group, y = prop, fill = pos_cat)) +
   geom_bar(stat = "identity", position = "stack", width = 0.5, color = 'black', linewidth = 0.25) +
@@ -121,7 +121,7 @@ ggplot(plot_df, aes(x = group, y = prop, fill = pos_cat)) +
                     values = n_lin_colors) +
   labs(y = "# of clones", x = "Group") +
   theme_classic()
-ggsave(paste0(out_dir, "fig1/lin_per_clone_perc.pdf"), width = 5)
+ggsave(paste0(out_dir, "fig1/lin_per_clone_perc.pdf"), width = 5, height = 4.18)
 
 df_all$Group_source <- paste0(df_all$Group, "_", df_all$source)
 
@@ -144,27 +144,27 @@ count_df_perc$tissue <- count_df$tissue
 ggplot(count_df_perc, aes(x = tissue, y = B_pos, color = tissue)) + geom_boxplot(fatten = NULL, width = 0.6) +
   stat_summary(fun = "mean", geom = "crossbar", width = 0.6) +
   geom_point(color = "black", size = 1.4) + scale_color_manual(values = tissue_colors) + theme_classic() + ylim(0,1)
-ggsave(paste0(out_dir, "fig1/B_perc_of_clones.pdf"), width = 4)
+ggsave(paste0(out_dir, "fig1/B_perc_of_clones.pdf"), width = 4, height = 4.18)
 
 ggplot(count_df_perc, aes(x = tissue, y = Mono_pos, color = tissue)) + geom_boxplot(fatten = NULL, width = 0.6) +
   stat_summary(fun = "mean", geom = "crossbar", width = 0.6) +
   geom_point(color = "black", size = 1.4) + scale_color_manual(values = tissue_colors) + theme_classic() + ylim(0,1)
-ggsave(paste0(out_dir, "fig1/Mono_perc_of_clones.pdf"), width = 4)
+ggsave(paste0(out_dir, "fig1/Mono_perc_of_clones.pdf"), width = 4, height = 4.18)
 
 ggplot(count_df_perc, aes(x = tissue, y = Mk_pos, color = tissue)) + geom_boxplot(fatten = NULL, width = 0.6) +
   stat_summary(fun = "mean", geom = "crossbar", width = 0.6) +
   geom_point(color = "black", size = 1.4) + scale_color_manual(values = tissue_colors) + theme_classic() + ylim(0,1)
-ggsave(paste0(out_dir, "fig1/Mk_perc_of_clones.pdf"), width = 4)
+ggsave(paste0(out_dir, "fig1/Mk_perc_of_clones.pdf"), width = 4, height = 4.18)
 
 ggplot(count_df_perc, aes(x = tissue, y = RBC_pos, color = tissue)) + geom_boxplot(fatten = NULL, width = 0.6) +
   stat_summary(fun = "mean", geom = "crossbar", width = 0.6) +
   geom_point(color = "black", size = 1.4) + scale_color_manual(values = tissue_colors) + theme_classic() + ylim(0,1)
-ggsave(paste0(out_dir, "fig1/RBC_perc_of_clones.pdf"), width = 4)
+ggsave(paste0(out_dir, "fig1/RBC_perc_of_clones.pdf"), width = 4, height = 4.18)
 
 ggplot(count_df_perc, aes(x = tissue, y = NK_pos, color = tissue)) + geom_boxplot(fatten = NULL, width = 0.6) +
   stat_summary(fun = "mean", geom = "crossbar", width = 0.6) +
   geom_point(color = "black", size = 1.4) + scale_color_manual(values = tissue_colors) + theme_classic() + ylim(0,1)
-ggsave(paste0(out_dir, "fig1/NK_perc_of_clones.pdf"), width = 4)
+ggsave(paste0(out_dir, "fig1/NK_perc_of_clones.pdf"), width = 4, height = 4.18)
 
 # plot lineage output % with numbers for data checking
 b <- ggplot(count_df_perc, aes(x = tissue, y = B_pos, color = tissue)) +
@@ -203,17 +203,13 @@ plot_df <- data.frame(table(df_all$Group, df_all$B_mono))
 colnames(plot_df) <- c("group", "B_mono", "n")
 plot_df$group <- factor(plot_df$group, levels = c("FL", "CB", "BM"))
 
-ggplot(plot_df, aes(x = group, y = n, fill = B_mono)) + geom_col(width = 0.5) + theme_classic() + 
-  scale_fill_manual(values = B_mono_colors)
-ggsave(paste0(out_dir, "sup1/B_mono_counts.pdf"), width = 4.5)
-
 ggplot(data = plot_df,
        aes(x = group, y = n, alluvium = B_mono, 
            fill = B_mono, stratum = B_mono)) +
   geom_alluvium() +
   geom_stratum(width = 0.5) + theme_classic() + 
   scale_fill_manual(values = B_mono_colors)
-ggsave(paste0(out_dir, "sup1/B_mono_counts_river.pdf"), width = 4.5)
+ggsave(paste0(out_dir, "sup1/B_mono_counts_river.pdf"), width = 4.5, height = 4.18)
 
 ggplot(data = plot_df,
        aes(x = group, y = n, alluvium = B_mono, 
@@ -222,7 +218,7 @@ ggplot(data = plot_df,
   geom_stratum(width = 0.5) + theme_classic() + 
   scale_fill_manual(values = B_mono_colors) + 
   geom_text(aes(label = n), position = position_stack(vjust = 0.5), size = 3.5)
-ggsave(paste0(out_dir, "additional_plots/B_mono_counts_river_numbers.pdf"), width = 4.5)
+ggsave(paste0(out_dir, "additional_plots/B_mono_counts_river_numbers.pdf"), width = 4.5, height = 4.18)
 
 
 # divide by total number of colonies per sample group
@@ -236,7 +232,7 @@ ggplot(data = plot_df,
   geom_alluvium() +
   geom_stratum(width = 0.5) + theme_classic() + 
   scale_fill_manual(values = B_mono_colors)
-ggsave(paste0(out_dir, "fig1/B_mono_perc_river.pdf"), width = 4.5)
+ggsave(paste0(out_dir, "fig1/B_mono_perc_river.pdf"), width = 4.5, height = 4.18)
 
 ggplot(data = plot_df,
        aes(x = group, y = perc, alluvium = B_mono, 
@@ -245,7 +241,7 @@ ggplot(data = plot_df,
   geom_stratum(width = 0.5) + theme_classic() + 
   scale_fill_manual(values = B_mono_colors) + 
   geom_text(aes(label = round(perc,3)), position = position_stack(vjust = 0.5), size = 3.5)
-ggsave(paste0(out_dir, "additional_plots/B_mono_perc_river_numbers.pdf"), width = 4.5)
+ggsave(paste0(out_dir, "additional_plots/B_mono_perc_river_numbers.pdf"), width = 4.5, height = 4.18)
 
 
 plot_df2 <- data.frame(table(df_all$Group_source, df_all$B_mono))
