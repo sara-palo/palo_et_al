@@ -1,0 +1,156 @@
+# Load required libraries
+library(tidyverse)
+library(readxl)
+library(patchwork)
+library(scales)
+library(forcats)
+library(ggplot2)
+library(renv)
+set.seed(123)
+
+n_lin_colors <- c(
+  "non-defined" = "#E0E9ED",
+  "1 positive" = "#A8C7DC",
+  "2 positives" = "#6F92AA",
+  "3+ positives" = "#3C5868")
+### set work directory
+PRJ <- "H:/Lineageplasticity/LP_revise_singleMS5"
+setwd(PRJ)
+out_dir <- sprintf("output_%s", format(Sys.Date(), "%Y%m%d"))
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+cut_off <- 50
+
+
+### Read data using read_excel
+df_all1 <- read_excel("LP12_RO.xls") %>% mutate(source = "LP12")
+df_all2 <- read_excel("LP13_RO.xls") %>% mutate(source = "LP13")
+df_all3 <- read_excel("LP14_RO.xls") %>%
+  mutate(source = case_when(str_detect(...1, "^FL[123]") ~ "LP14A",
+                            str_detect(...1, "^FL[456]") ~ "LP14B",TRUE ~ "LP14"))
+df_all_1to3 <- bind_rows(df_all1, df_all2, df_all3)
+df_all_1to3 <- df_all_1to3[df_all_1to3$...1 != "BM2_H9_H09_056.fcs", ] # positive control.
+df_all_1to3 <- df_all_1to3[df_all_1to3$...1 != "CB2_G4_G04_044.fcs", ] # DW
+df_all_1to3 <- df_all_1to3[df_all_1to3$...1 != "BM reanaysis_D3_D03_018.fcs", ] # stroma!
+df_all_1to3<-mutate(df_all_1to3,Sample = ...1,
+               Group = case_when(str_detect(Sample, "^BM") ~ "BM_st",
+                                 str_detect(Sample, "^CB") ~ "CB_st",
+                                 str_detect(Sample, "^FL") ~ "FL_st"),
+               B_pos =`B(inclCD11b)` >= cut_off,
+               NK_pos = `NKp46+(inclCD11b)` >= cut_off,
+               Mono_pos = Mono >= cut_off,
+               RBC_pos = RBC >= cut_off,
+               Mk_pos = Mk >= cut_off)
+
+df_all_1to3 <-  filter(df_all_1to3,!is.na(Group))%>% select(11,13:18)
+
+### Read data using read_excel
+df_all5 <- read_excel("LP17_RO_regate.xls") %>% mutate(Sample= ...1,
+                                                     source = "LP17",
+                                                     Group = case_when(str_detect(Sample, "BM") ~ paste0("BM_",condition),
+                                                                       str_detect(Sample, "CB") ~ paste0("CB_", condition),
+                                                                       str_detect(Sample, "FL") ~ paste0("FL_",condition)))
+df_all6 <- read_excel("LP18.1_RO_regate.xls") %>% mutate(Sample= ...1,
+                                                       source = "LP18",
+                                                       Group = case_when(str_detect(Sample, "BM") ~ paste0("BM_",condition),
+                                                                         str_detect(Sample, "CB") ~ paste0("CB_", condition)))
+df_all7 <- read_excel("LP18.2_RO_regate.xls") %>% mutate(Sample= ...1,
+                                                       source = "LP18",
+                                                       Group = case_when(str_detect(Sample, "FL1") ~ paste0("FL_",condition),
+                                                                         str_detect(Sample, "FL2") ~ paste0("FL_", condition)))
+
+df_all8 <- read_excel("LP19.1_RO_regate.xls") %>% mutate(Sample= ...1,
+                                                       source = "LP19",
+                                                       Group = case_when(str_detect(Sample, "FL1") ~ paste0("FL_",condition),
+                                                                         str_detect(Sample, "FL2") ~ paste0("FL_", condition),
+                                                                         str_detect(Sample,"BM") ~ paste0("BM_",condition)))%>%na.omit()
+df_all9 <- read_excel("LP19.2_RO_regate.xls") %>% mutate(Sample= ...1,
+                                                       source = "LP19",
+                                                       Group = case_when(str_detect(Sample, "CB1") ~ paste0("CB_",condition),
+                                                                         str_detect(Sample, "CB2") ~ paste0("CB_", condition)))%>%na.omit()
+
+### combine them and exclude the control
+df_all_5to9 <- bind_rows(df_all5,df_all6,df_all7,df_all8,df_all9)
+df_all_5to9 <- df_all_5to9[df_all_5to9$...1 != "CB MNC_B1_B01.fcs", ]
+
+### Processing function
+df_all_5to9<-mutate(df_all_5to9,
+               B_pos =`B` >= cut_off,
+               NK_pos = `NK` >= cut_off,
+               Mono_pos = Mono >= cut_off,
+               RBC_pos = RBC >= cut_off,
+               Mk_pos = Mgk >= cut_off)
+df_all_5to9 <-  filter(df_all_5to9,!is.na(Group))%>% select(10:16)
+
+
+
+# Positivity category
+df_all_1to3 <- df_all_1to3 %>%
+  rowwise() %>%
+  mutate(n_positive = sum(c_across(ends_with("_pos"))),
+         PositivityCategory = case_when(n_positive == 0 ~ "non-defined",
+                                        n_positive == 1 ~ "1 positive",
+                                        n_positive == 2 ~ "2 positives",
+                                        n_positive >= 3 ~ "3+ positives"))
+df_all_5to9 <- df_all_5to9 %>%
+  rowwise() %>%
+  mutate(n_positive = sum(c_across(ends_with("_pos"))),
+         PositivityCategory = case_when(n_positive == 0 ~ "non-defined",
+                                        n_positive == 1 ~ "1 positive",
+                                        n_positive == 2 ~ "2 positives",
+                                        n_positive >= 3 ~ "3+ positives"))
+df_all_1to3 <-  mutate(df_all_1to3,Group = factor(Group, levels = c("FL_st","CB_st","BM_st")))
+df_all_5to9 <- mutate(df_all_5to9,Group = factor(Group, levels = c("FL_st+15","FL_st-7", "CB_st+15", "CB_st-7", "BM_st+15", "BM_st-7")))
+
+
+###for total number bar
+df_p1_counts <- df_all_1to3 %>%  count(Group, PositivityCategory)
+###for percentage number bar
+df_p1_props <- df_all_1to3 %>% count(Group, PositivityCategory) %>%
+  group_by(Group) %>% mutate(prop = n / sum(n))
+
+###for total number bar
+df_p2_counts <- df_all_5to9 %>%  count(Group, PositivityCategory)
+###for percentage number bar
+df_p2_props <- df_all_5to9 %>% count(Group, PositivityCategory) %>%
+  group_by(Group) %>% mutate(prop = n / sum(n))
+
+
+# with number
+p1 <- ggplot(df_p2_counts, aes(x = Group, y = n, fill = PositivityCategory)) +
+  geom_bar(stat = "identity", position = "stack") +
+  geom_text(aes(label = n), 
+            position = position_stack(vjust = 0.5), size = 3.5) +
+  scale_fill_manual(values=n_lin_colors ) +
+  labs(title = "Number of lineage (FL & CB & BM)", y = "# of wells", x = "Group") +
+  theme_classic()+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+p2 <- ggplot(df_p2_props, aes(x = Group, y = prop, fill = PositivityCategory)) +
+  geom_bar(stat = "identity", position = "fill") +
+  geom_text(aes(label = paste0(round(prop * 100), "%")),
+            position = position_fill(vjust = 0.5), size = 3.5) +
+  scale_fill_manual(values=n_lin_colors ) +
+  labs(title = "Percentage of lineage (FL & CB & BM)", y = "Proportion", x = "Group") +
+  theme_classic()+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+pdf(paste0(out_dir,"/LP_clone_with_num2.pdf"), width = 8, height = 4)
+print(p1+p2, ncol=2)
+
+dev.off()
+
+p3 <- ggplot(df_p2_counts, aes(x = Group, y = n, fill = PositivityCategory)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values=n_lin_colors ) +
+  labs(title = "Number of lineage (FL & CB & BM)", y = "# of wells", x = "Group") +
+  theme_classic()+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# p2 percentage
+p4 <- ggplot(df_p2_props, aes(x = Group, y = prop, fill = PositivityCategory)) +
+  geom_bar(stat = "identity", position = "fill") +
+  scale_fill_manual(values=n_lin_colors ) +
+  labs(title = "Percentage of lineage (FL & CB & BM)", y = "Proportion", x = "Group") +
+  theme_classic()+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+pdf(paste0(out_dir,"/LP_clone_50_without_num2.pdf"), width = 8, height = 4)
+print(p3+p4, ncol=2)
+dev.off()
+
