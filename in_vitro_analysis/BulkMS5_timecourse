@@ -1,0 +1,157 @@
+library(tidyverse)
+library(readxl)
+library(patchwork)
+library(scales)
+library(ggbreak)
+set.seed(123)
+### set work directory
+PRJ <- "H:/Lineageplasticity/LP_revise_bulkMS5"
+setwd(PRJ)
+out_dir <- sprintf("regate0615_output_%s", format(Sys.Date(), "%Y%m%d"))
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+
+### Read data using read_excel
+bulk_all <- read_excel("Regate0615/Revise_bulk_regate0615.xls")%>%
+  mutate(Group = case_when(str_detect(...1, "BM") ~ "BM",
+                           str_detect(...1, "CB") ~ "CB",
+                           str_detect(...1, "FL") ~ "FL")) %>%
+  mutate(sample=paste0(Group,batch))%>%
+  mutate(name = paste0(Group,"_",condition,"_w",week))%>%
+  mutate(amount=210)%>%na.omit() #%>% filter(exp!=16)
+
+bulk_all$Group <- factor(bulk_all$Group, levels = c("FL","CB","BM"))
+target_markers <- c("alive","RBC","Mk","Mono","B","NK","CD45+")
+for (m in target_markers) {new_col <- paste0("abs_", m)
+bulk_all[[new_col]] <- ((bulk_all[[m]] * 10 * 50000) / (bulk_all$beads * bulk_all$amount))} 
+bulk_all <- bulk_all %>%
+  mutate(correction_factor = ifelse(exp %in% c(16, 17), 0.5, 1))## because exp#16 and #17 has two replicates
+
+
+plot_df <- bulk_all %>%
+  mutate(Mono_pct_CD45 = Mono / `CD45+` * 100, B_pct_CD45    = B / `CD45+` * 100,week = factor(week, levels = c(2, 3))) %>%
+  filter(condition == "st")
+
+group_cols <- c(  "FL" = "#1c6494", "CB" = "darkred","BM" = "#1b4b1f")
+
+plot_df <- plot_df %>%
+  mutate(abs_B_plot = ifelse(abs_B == 0, 0.1, abs_B))%>%
+  mutate(B_pct_CD45_plot = ifelse(B_pct_CD45 == 0, 0.01, B_pct_CD45))
+
+p_mono <- ggplot(plot_df, aes(x = week, y = Mono_pct_CD45,color = Group)) +
+  geom_boxplot(position = position_dodge(width = 0.4),  width = 0.3,outlier.shape = NA  ) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.08,dodge.width = 0.4),size = 2, alpha = 0.9,shape = 15) +
+  scale_color_manual(values = group_cols) +
+  labs(title = "Monocytes from HSPCs\nshowing frequency within CD45", x = "week", y = "% in CD45" ) +
+  theme_classic(base_size = 18) +
+  stat_summary(aes(group = Group), fun = median, geom = "line", linewidth = 1.2,position =position_dodge(width=0.4)) +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 22),
+        axis.title = element_text(face = "bold"),
+        axis.text = element_text(face = "bold", color = "black"),legend.title = element_blank()  )+
+  scale_y_continuous(limits=c())
+p_mono
+
+p_b <- ggplot(plot_df, aes(x = week, y = B_pct_CD45_plot,color= Group)) +
+  geom_boxplot(position = position_dodge(width = 0.4) , width = 0.3,outlier.shape = NA  ) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.08,dodge.width = 0.4),size = 2, alpha = 0.9,shape = 15) +
+  scale_color_manual(values = group_cols) +
+  labs(  title = "B cell from HSPCs\nshowing frequency within CD45",  x = "week",  y = "% in CD45"  ) +
+  theme_classic(base_size = 18) +
+  stat_summary(aes(group = Group), fun = median, geom = "line", linewidth = 1.2,position =position_dodge(width=0.4)) +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 22),  axis.title = element_text(face = "bold"),
+        axis.text = element_text(face = "bold", color = "black"),  legend.title = element_blank() )+  
+  scale_y_break(c(40,70),scales = 0.2,   ticklabels = c(0,20,40,70,80,100))  
+
+p_b
+fig <- p_mono + p_b + plot_layout(ncol = 2)
+
+fig
+
+ggsave( file.path(out_dir, "Mono_B_pct_timecourse_withbreak.pdf"), fig,width = 12, height = 6,  dpi = 300)
+
+write.csv(plot_df, file.path(out_dir, "Mono_B_pct_timecourse.csv"), row.names = FALSE)
+
+
+p_mono <- ggplot(plot_df, aes(x = week, y = Mono_pct_CD45, color = Group)) +
+  geom_boxplot(
+    position = position_dodge(width = 0.4),
+    width = 0.3,
+    outlier.shape = NA
+  ) +
+  geom_text(
+    aes(label = round(Mono_pct_CD45, 1)),
+    position = position_jitterdodge(
+      jitter.width = 0.08,
+      dodge.width = 0.4
+    ),
+    size = 3,
+    color = "black"
+  ) +
+  scale_color_manual(values = group_cols) +
+  labs(
+    title = "Monocytes from HSPCs\nshowing frequency within CD45",
+    x = "week",
+    y = "% in CD45"
+  ) +
+  theme_classic(base_size = 18) +
+  stat_summary(
+    aes(group = Group),
+    fun = median,
+    geom = "line",
+    linewidth = 1.2,
+    position = position_dodge(width = 0.4)
+  ) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 22),
+    axis.title = element_text(face = "bold"),
+    axis.text = element_text(face = "bold", color = "black"),
+    legend.title = element_blank()
+  )
+
+
+
+p_b <- ggplot(plot_df, aes(x = week, y = B_pct_CD45_plot, color = Group)) +
+  geom_boxplot(
+    position = position_dodge(width = 0.4),
+    width = 0.3,
+    outlier.shape = NA
+  ) +
+  geom_text(
+    aes(label = round(B_pct_CD45_plot, 1)),
+    position = position_jitterdodge(
+      jitter.width = 0.08,
+      dodge.width = 0.4
+    ),
+    size = 3,
+    color = "black"
+  ) +
+  scale_color_manual(values = group_cols) +
+  labs(
+    title = "B cell from HSPCs\nshowing frequency within CD45",
+    x = "week",
+    y = "% in CD45"
+  ) +
+  theme_classic(base_size = 18) +
+  stat_summary(
+    aes(group = Group),
+    fun = median,
+    geom = "line",
+    linewidth = 1.2,
+    position = position_dodge(width = 0.4)
+  ) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5, size = 22),
+    axis.title = element_text(face = "bold"),
+    axis.text = element_text(face = "bold", color = "black"),
+    legend.title = element_blank()
+  ) +
+  scale_y_break(
+    c(40, 70),
+    scales = 0.2,
+    ticklabels = c(0,20,40,70,80,100)
+  )
+
+fig <- p_mono + p_b + plot_layout(ncol = 2)
+
+fig
+
+ggsave( file.path(out_dir, "Mono_B_pct_timecourse_withbreak_number.pdf"), fig,width = 12, height = 6,  dpi = 300)
