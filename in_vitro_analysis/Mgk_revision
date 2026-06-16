@@ -60,23 +60,6 @@ p <- ggplot(mgk_all, aes(x = Group, y =pct_Mgk,colour = Group)) +
 p
 ggsave(filename = file.path(out_dir, "Mgk_pct(CD45)_v2.pdf"), plot = p, width = 4, height = 5, dpi = 300)
 
-p <- ggplot(mgk_all, aes(x = Group, y = pct_Mgk, colour = Group)) +
-  geom_boxplot(linewidth = 1.5, width = 0.6) +
-  geom_text(
-    aes(label = round(pct_Mgk, 1)),
-    position = position_jitter(width = 0.08, height = 0),
-    color = "black",
-    size = 4
-  ) +
-  labs(title = "Mgk (%) in CD45", y = "% in CD45+", x = NULL) +
-  theme_classic(base_size = 18) +
-  scale_color_manual(values = group_cols) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    axis.text = element_text(face = "bold"),
-    axis.title.y = element_text(face = "bold")
-  )
-ggsave(filename = file.path(out_dir, "Mgk_pct(CD45)_v2_num.pdf"), plot = p, width = 4, height = 5, dpi = 300)
 
 p <- ggplot(mgk_all, aes(x = Group, y = pct_RBC,color = Group)) +
   geom_boxplot(linewidth = 1.5, width = 0.6 ) +
@@ -88,23 +71,6 @@ p <- ggplot(mgk_all, aes(x = Group, y = pct_RBC,color = Group)) +
 p
 ggsave(filename = file.path(out_dir, "RBC_pct(alive)_v2.pdf"), plot = p, width = 4, height = 5, dpi = 300)
 
-p <- ggplot(mgk_all, aes(x = Group, y = pct_RBC, colour = Group)) +
-  geom_boxplot(linewidth = 1.5, width = 0.6) +
-  geom_text(
-    aes(label = round(pct_RBC, 1)),
-    position = position_jitter(width = 0.08, height = 0),
-    color = "black",
-    size = 4
-  ) +
-  labs(title = "RBC (%) in alive cells", y = "% in alive", x = NULL) +
-  theme_classic(base_size = 18) +
-  scale_color_manual(values = group_cols) +
-  theme(
-    plot.title = element_text(face = "bold", hjust = 0.5),
-    axis.text = element_text(face = "bold"),
-    axis.title.y = element_text(face = "bold")
-  )
-ggsave(filename = file.path(out_dir, "RBC_pct(alive)_v2_num.pdf"), plot = p, width = 4, height = 5, dpi = 300)
 
 write.csv(mgk_all, file.path(out_dir, "mgk_all_results.csv"), row.names = FALSE)
 
