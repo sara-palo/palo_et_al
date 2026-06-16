@@ -44,26 +44,26 @@ df_all_1to3<-mutate(df_all_1to3,Sample = ...1,
 df_all_1to3 <-  filter(df_all_1to3,!is.na(Group))%>% select(11,13:18)
 
 ### Read data using read_excel
-df_all5 <- read_excel("LP17_RO_regate.xls") %>% mutate(Sample= ...1,
+df_all5 <- read_excel("LP17_RO_regate3.xls") %>% mutate(Sample= ...1,
                                                      source = "LP17",
                                                      Group = case_when(str_detect(Sample, "BM") ~ paste0("BM_",condition),
                                                                        str_detect(Sample, "CB") ~ paste0("CB_", condition),
                                                                        str_detect(Sample, "FL") ~ paste0("FL_",condition)))
-df_all6 <- read_excel("LP18.1_RO_regate.xls") %>% mutate(Sample= ...1,
+df_all6 <- read_excel("LP18.1_RO_regate3.xls") %>% mutate(Sample= ...1,
                                                        source = "LP18",
                                                        Group = case_when(str_detect(Sample, "BM") ~ paste0("BM_",condition),
                                                                          str_detect(Sample, "CB") ~ paste0("CB_", condition)))
-df_all7 <- read_excel("LP18.2_RO_regate.xls") %>% mutate(Sample= ...1,
+df_all7 <- read_excel("LP18.2_RO_regate3.xls") %>% mutate(Sample= ...1,
                                                        source = "LP18",
                                                        Group = case_when(str_detect(Sample, "FL1") ~ paste0("FL_",condition),
                                                                          str_detect(Sample, "FL2") ~ paste0("FL_", condition)))
 
-df_all8 <- read_excel("LP19.1_RO_regate.xls") %>% mutate(Sample= ...1,
+df_all8 <- read_excel("LP19.1_RO_regate3.xls") %>% mutate(Sample= ...1,
                                                        source = "LP19",
                                                        Group = case_when(str_detect(Sample, "FL1") ~ paste0("FL_",condition),
                                                                          str_detect(Sample, "FL2") ~ paste0("FL_", condition),
                                                                          str_detect(Sample,"BM") ~ paste0("BM_",condition)))%>%na.omit()
-df_all9 <- read_excel("LP19.2_RO_regate.xls") %>% mutate(Sample= ...1,
+df_all9 <- read_excel("LP19.2_RO_regate3.xls") %>% mutate(Sample= ...1,
                                                        source = "LP19",
                                                        Group = case_when(str_detect(Sample, "CB1") ~ paste0("CB_",condition),
                                                                          str_detect(Sample, "CB2") ~ paste0("CB_", condition)))%>%na.omit()
