@@ -125,7 +125,7 @@ table(cvejic$seurat_clusters)
 
 # now re-run peak calling on a per-cluster basis
 cvejic_peaks <- CallPeaks(cvejic, group.by = 'seurat_clusters',
-                          macs2.path = '/Users/sa5488pa/Library/Python/3.9/bin/macs2', idents = 0:12)
+                          macs2.path = '/Users/sa5488pa/Library/Python/3.9/bin/macs2', idents = 0:13)
 
 peakwidths <- width(cvejic_peaks)
 cvejic_peaks <- cvejic_peaks[peakwidths < 10000 & peakwidths > 20]

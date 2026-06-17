@@ -188,41 +188,4 @@ autoplot(object = pcaBM, data = BMmotifs, color = 'cluster', size = 1.1) +
 ggsave(paste0(fig_path, 'additional_plots/BM_top150motifs_pca.pdf'))
 
 
-# scatter plots
-FL <- ScaleData(FL, assay = 'cisbpchromvar')
-BM <- ScaleData(BM, assay = 'cisbpchromvar')
-
-fl_chrmv <- data.frame(t(FL[['cisbpchromvar']]@scale.data[, WhichCells(FL, expression = pred.id.BM == 'HSC')]))
-fl_chrmv$sample <- 'FL'
-bm_chrmv <- data.frame(t(BM[['cisbpchromvar']]@scale.data[, WhichCells(BM, expression = BM_annot == 'HSC')]))
-bm_chrmv$sample <- 'BM'
-
-ggplot(fl_chrmv, aes(y = GATA1, x = SPI1, color = sample)) +
-  scale_color_manual(values = annot_colors$tissue_cols) +
-  ylim(min(c(fl_chrmv$GATA1, bm_chrmv$GATA1)), max(c(fl_chrmv$GATA1, bm_chrmv$GATA1))) +
-  xlim(min(c(fl_chrmv$SPI1, bm_chrmv$SPI1)), max(c(fl_chrmv$SPI1, bm_chrmv$SPI1))) +
-  geom_point() + theme_bw() + coord_fixed()
-ggsave(paste0(fig_path, 'fig3/FL_GATA1_SPI1_scatter.pdf'))
-
-ggplot(bm_chrmv, aes(y = GATA1, x = SPI1, color = sample)) +
-  scale_color_manual(values = annot_colors$tissue_cols) +
-  ylim(min(c(fl_chrmv$GATA1, bm_chrmv$GATA1)), max(c(fl_chrmv$GATA1, bm_chrmv$GATA1))) +
-  xlim(min(c(fl_chrmv$SPI1, bm_chrmv$SPI1)), max(c(fl_chrmv$SPI1, bm_chrmv$SPI1))) +
-  geom_point() + theme_bw() + coord_fixed()
-ggsave(paste0(fig_path, 'fig3/BM_GATA1_SPI1_scatter.pdf'))
-
-ggplot(fl_chrmv, aes(x = EBF1, y = SPI1, color = sample)) +
-  scale_color_manual(values = annot_colors$tissue_cols) +
-  xlim(min(c(fl_chrmv$EBF1, bm_chrmv$EBF1)), max(c(fl_chrmv$EBF1, bm_chrmv$EBF1))) +
-  ylim(min(c(fl_chrmv$SPI1, bm_chrmv$SPI1)), max(c(fl_chrmv$SPI1, bm_chrmv$SPI1))) +
-  geom_point() + theme_bw() + coord_fixed()
-ggsave(paste0(fig_path, 'additional_plots/FL_EBF1_SPI1_scatter.pdf'))
-
-ggplot(bm_chrmv, aes(x = EBF1, y = SPI1, color = sample)) +
-  scale_color_manual(values = annot_colors$tissue_cols) +
-  xlim(min(c(fl_chrmv$EBF1, bm_chrmv$EBF1)), max(c(fl_chrmv$EBF1, bm_chrmv$EBF1))) +
-  ylim(min(c(fl_chrmv$SPI1, bm_chrmv$SPI1)), max(c(fl_chrmv$SPI1, bm_chrmv$SPI1))) +
-  geom_point() + theme_bw() + coord_fixed()
-ggsave(paste0(fig_path, 'additional_plots/BM_EBF1_SPI1_scatter.pdf'))
-
 

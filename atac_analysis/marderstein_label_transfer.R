@@ -209,8 +209,8 @@ DimPlot(FL, reduction = 'umap', group.by = 'pred.id.cvejic', label = TRUE, repel
         axis.title.x = element_text(size = 12), 
         axis.title.y = element_text(size = 12))
 
-(DimPlot(FL, reduction = 'cvejic_umap', group.by = 'pred.id.cvejic', pt.size = 0.6) + coord_fixed() + xlim(c(-8, 12)) + ylim(c(-12, 8))) |
-  (DimPlot(FL, reduction = 'cvejic_umap', group.by = 'seurat_clusters', pt.size = 0.6, cols = annot_colors$seurat_cluster_cols) + coord_fixed() + xlim(c(-8, 12)) + ylim(c(-12, 8)))
+(DimPlot(FL, reduction = 'cvejic_umap', group.by = 'pred.id.cvejic', pt.size = 0.6) + coord_fixed() + xlim(c(-12, 12)) + ylim(c(-12, 8))) |
+  (DimPlot(FL, reduction = 'cvejic_umap', group.by = 'seurat_clusters', pt.size = 0.6, cols = annot_colors$seurat_cluster_cols) + coord_fixed() + xlim(c(-12, 12)) + ylim(c(-12, 8)))
 ggsave(paste0(fig_path, 'additional_plots/CS22_proj_on_cvejic_presubset.pdf'), width = 10) 
 
 DimPlot(cvejic, reduction = 'CS22umap', group.by = 'pred.id.CS22', pt.size = 0.6, cols = annot_colors$seurat_cluster_cols) + coord_fixed() 

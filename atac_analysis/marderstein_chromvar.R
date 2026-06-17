@@ -6,6 +6,7 @@ library(chromVAR)
 library(GenomeInfoDb)
 library(BSgenome.Hsapiens.UCSC.hg38)
 library(ggvenn)
+library(ggfortify)
 
 cvejic <- readRDS(paste0(rds_path, 'cvejic_subset.rds'))
 
@@ -212,8 +213,6 @@ table(na.omit(pos_df$C4) %in% res4$nonexisting_genes)
 table(na.omit(pos_df$C8) %in% res8$nonexisting_genes)
 
 # make PC plot of Ly/GMP 
-library(ggfortify)
-
 clusters_oi <- c('Ly-I', 'Ly-II', 'GMP-II')
 
 pca_cols <- c('Ly-I' = '#BC89CC', 'Ly-II' = '#63226E', 'GMP-II' = '#2874A6')
@@ -240,9 +239,15 @@ pcacvsubs <- prcomp(cvsubsmotifs[, 1:(dim(cvsubsmotifs)[2]-1)])
 autoplot(object = pcacvsubs, data = cvsubsmotifs, color = 'cluster', size = 1.1) +
   scale_color_manual(values = pca_cols) + 
   theme_bw()
-ggsave(paste0(fig_path, 'fig4/mard_lymy_top150motifs_pca.pdf'))
+ggsave(paste0(fig_path, 'fig4/mard_lymy_top150motifs_pca.pdf'), width = 7.61, height = 4.15)
 
+# Flip x axis to match other plots
+pcacvsubs$x[,1] <- - pcacvsubs$x[,1]
+pcacvsubs$rotation[,1] <- -pcacvsubs$rotation[,1]
 
-
+autoplot(object = pcacvsubs, data = cvsubsmotifs, color = 'cluster', size = 1.1) +
+  scale_color_manual(values = pca_cols) + 
+  theme_bw()
+ggsave(paste0(fig_path, 'fig4/mard_lymy_top150motifs_pca_xflip.pdf'), width = 7.61, height = 4.15)
 
 

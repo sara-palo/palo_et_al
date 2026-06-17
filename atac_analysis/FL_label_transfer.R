@@ -228,7 +228,7 @@ ggsave(paste0(fig_path, 'additional_plots/FL_predIDs_CITE.pdf'))
 FeaturePlot(FL, reduction = 'umap', 'pred.id.score.CITE', cols = annot_colors$expr_cols_1, pt.size = 0.5) + coord_fixed()
 ggsave(paste0(fig_path, 'sup3/FL_cite_predicted_ID_scores.pdf'))
 
-VlnPlot(FL, 'pred.id.score.CITE', group.by = 'pred.id.CITE', cols = annot_colors$cite_cols, pt.size = 0.01) + NoLegend()
+VlnPlot(FL, 'pred.id.score.CITE', group.by = 'pred.id.CITE', cols = annot_colors$cite_cols, pt.size = 0.01) + NoLegend() + ylim(0,1.01)
 ggsave(paste0(fig_path, 'additional_plots/FL_pred_scores_vln_CITE.pdf'))
 
 FL_CITE$clust.names <- factor(FL_CITE$clust.names, levels = clust_order_CITE)
@@ -315,7 +315,7 @@ DimPlot(FL, reduction = 'BMumap', group.by = 'seurat_clusters', label = F, repel
 ggsave(paste0(fig_path, 'additional_plots/FL_BMrefumap.pdf'), width = 6.2, height = 4.65)
 
 
-VlnPlot(FL, 'pred.id.score.BM', group.by = 'pred.id.BM', cols = annot_colors$cluster_cols, pt.size = 0.01) + NoLegend()
+VlnPlot(FL, 'pred.id.score.BM', group.by = 'pred.id.BM', cols = annot_colors$cluster_cols, pt.size = 0.01) + NoLegend() + ylim(0,1.01)
 ggsave(paste0(fig_path, 'additional_plots/FL_pred_scores_vln_BM.pdf'))
 
 predictions_clusters_BM <- table(FL$seurat_clusters, FL$pred.id.BM)

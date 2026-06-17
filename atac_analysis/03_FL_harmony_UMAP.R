@@ -93,3 +93,24 @@ res
 
 resdf <- data.frame(res$p.value)
 write.csv(resdf, paste0(sup_table_path, '/FL_peak_counts_stats.csv'))
+
+
+clustersFL <- data.frame(table(FL$seurat_clusters, FL$sample_number))
+colnames(clustersFL) <- c('cluster', 'sample_number', 'count')
+
+#calculate which percentage of the sample each cluster/predicted cell type contains
+clustersFL$pct <- ifelse(clustersFL$sample_number == 'FL1', (clustersFL$count/(sum(FL$sample_number == 'FL1'))) * 100, 
+                         (clustersFL$count/(sum(FL$sample_number == 'FL2'))) * 100)
+
+clustersFL$sample_number <- factor(clustersFL$sample_number, levels = c('FL1', 'FL2'))
+
+ggplot(data = clustersFL, aes(x = cluster, y = pct)) + theme_bw() +
+  geom_bar(stat = "identity", aes(fill = sample_number), width = 0.7, position = position_dodge()) + 
+  scale_fill_manual('sample number', values = annot_colors$sample_numberFL) + 
+  scale_y_continuous(limits = c(0, 25)) +
+  labs(title = 'Cluster distribution') + xlab('Cluster') + ylab('% of total') +
+  theme(plot.title = element_text(hjust = 0.5, size = 14), 
+        axis.title.x = element_text(size = 12), 
+        axis.title.y = element_text(size = 12),
+        axis.text.x = element_text(angle = 45, vjust = 0.7))
+ggsave(filename = paste0(fig_path, 'sup2/FL_clust_distr.pdf'), width = 6, height = 3.2)
