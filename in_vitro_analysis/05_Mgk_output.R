@@ -1,0 +1,73 @@
+# Load required libraries
+library(tidyverse)
+library(readxl)
+library(patchwork)
+library(scales)
+library(forcats)
+library(ggplot2)
+library(renv)
+library(rstatix)
+library(ggpubr)
+library(broom)
+set.seed(123)
+group_cols <- c(  "FL" = "#1c6494", "CB" = "darkred","BM" = "#1b4b1f")
+
+### set work directory
+PRJ <- "H:/Lineageplasticity/LP revise_Mgk"
+setwd(PRJ)
+out_dir <- sprintf("output_%s", format(Sys.Date(), "%Y%m%d"))
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+cut_off <- 50
+
+
+
+### Read data using read_excel
+mgk_all <- read_excel("20260615 Mgk_RO.xls") %>%
+  mutate(source = case_when(str_detect(...1, "#17") ~ "17_mgk",
+                            str_detect(...1, "#18") ~ "18_mgk",
+                            str_detect(...1, "#19") ~ "19_mgk",TRUE ~ "16_mgk")) %>%
+  mutate(Group = case_when(str_detect(...1, "BM") ~ "BM",
+                           str_detect(...1, "CB") ~ "CB",
+                           str_detect(...1, "FL") ~ "FL")) %>%
+  mutate(amount=210, input=50) %>%
+  na.omit() 
+mgk_all$Group <- factor(mgk_all$Group, levels = c("FL","CB","BM"))
+
+
+mgk_all$pct_RBC <- ((mgk_all$RBC) / (mgk_all$alive) * 100)##RBC was calculated from alive
+mgk_all$pct_Mgk <- ((mgk_all$Mgk) / (mgk_all$CD45)*100)##Mgk was calculated from CD45+235a-
+
+###Krusuka.test
+kruskal_mgk <- kruskal.test(pct_Mgk ~ Group, data = mgk_all) %>% tidy() #unsignificant
+kruskal_rbc <- kruskal.test(pct_RBC ~ Group, data = mgk_all) %>% tidy() #unsignificant
+
+write.csv(kruskal_mgk, file.path(out_dir, "Krusukal_Mgk_results.csv"), row.names = FALSE)
+write.csv(kruskal_rbc, file.path(out_dir, "Krusukal_RBC_results.csv"), row.names = FALSE)
+###Percentage of Mgk in CD45
+summary_pct_mgk <- mgk_all %>%
+  group_by(Group) %>%
+  summarise(mean_val = mean(pct_Mgk, na.rm = TRUE),sd_val   = sd(pct_Mgk, na.rm = TRUE),.groups = "drop")
+p <- ggplot(mgk_all, aes(x = Group, y =pct_Mgk,colour = Group)) +
+  geom_boxplot(linewidth = 1.5, width = 0.6 ) +
+  geom_point( position = position_jitter(width = 0.05),color="black") +
+  labs(title = "Mgk (%) in CD45", y = "% in CD45+", x = NULL) +
+  theme_classic(base_size = 18) +
+  scale_color_manual(values=group_cols)+
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),axis.text = element_text(face = "bold"),axis.title.y = element_text(face = "bold"))
+p
+ggsave(filename = file.path(out_dir, "Mgk_pct(CD45)_v2.pdf"), plot = p, width = 4, height = 5, dpi = 300)
+
+
+p <- ggplot(mgk_all, aes(x = Group, y = pct_RBC,color = Group)) +
+  geom_boxplot(linewidth = 1.5, width = 0.6 ) +
+  geom_point(aes(x = Group, y = pct_RBC),color="black",position = position_jitter(width = 0.05)) +
+  labs(title = "RBC (%) in alive cells", y = "% in alive", x = NULL) +
+  theme_classic(base_size = 18) +
+  scale_color_manual(values=group_cols)+
+  theme(plot.title = element_text(face = "bold", hjust = 0.5),axis.text = element_text(face = "bold"),axis.title.y = element_text(face = "bold"))
+p
+ggsave(filename = file.path(out_dir, "RBC_pct(alive)_v2.pdf"), plot = p, width = 4, height = 5, dpi = 300)
+
+
+write.csv(mgk_all, file.path(out_dir, "mgk_all_results.csv"), row.names = FALSE)
+
