@@ -1,1 +1,1 @@
- 
+This repository contains the code used for the data analysis presented in the paper "Chromatin accessibility shapes development-specific lineage plasticity in hematopoiesis" by Palo et al, _Blood Advances_ 2026: https://doi.org/10.1182/bloodadvances.2026019909. 
